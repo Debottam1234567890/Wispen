@@ -1,0 +1,264 @@
+{
+  "title": "Learning Material",
+  "cards": [
+    {
+      "id": "card_1764859630454",
+      "front": "What is Machine Learning?",
+      "back": "A way for computers to learn from data without being specifically told how.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Machine learning allows computers to improve at tasks by analyzing data and finding patterns. Instead of writing specific instructions, the computer learns from examples.",
+      "tags": [
+        "AI",
+        "Learning",
+        "Data",
+        "Algorithms"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:10.454676"
+    },
+    {
+      "id": "card_1764859632128",
+      "front": "Artificial Intelligence",
+      "back": "The broader field of creating intelligent agents.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Artificial Intelligence (AI) is the overarching concept of making machines think and act like humans. This includes things like problem-solving and learning.",
+      "tags": [
+        "AI",
+        "General Knowledge",
+        "Technology"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:12.128717"
+    },
+    {
+      "id": "card_1764859633832",
+      "front": "What is Supervised Learning?",
+      "back": "Learning from examples where you know the right answer.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Supervised learning is like learning with a teacher who gives you examples and tells you what the correct output should be. For instance, showing a computer many pictures of cats and telling it 'cat' each time helps it learn to identify cats.",
+      "tags": [
+        "Machine Learning",
+        "Learning",
+        "Training Data",
+        "Labels"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:13.832283"
+    },
+    {
+      "id": "card_1764859635508",
+      "front": "Unsupervised Learning",
+      "back": "Finding patterns in data without labels.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Unsupervised learning is like exploring a box of unknown objects. You try to group similar objects together or find interesting features without knowing what they are beforehand. For example, grouping customers based on their purchasing habits.",
+      "tags": [
+        "Machine Learning",
+        "Unlabeled Data",
+        "Pattern Recognition",
+        "Algorithms"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:15.508919"
+    },
+    {
+      "id": "card_1764859637077",
+      "front": "Reinforcement Learning",
+      "back": "A type of machine learning where an agent learns to make decisions by interacting with an environment to maximize a cumulative reward.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Reinforcement learning is all about learning by doing. The agent explores the environment, takes actions, and receives rewards (or penalties). Through this process, the agent learns a policy to make optimal decisions.",
+      "tags": [
+        "Machine Learning",
+        "Agent",
+        "Reward",
+        "Policy"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:17.077533"
+    },
+    {
+      "id": "card_1764859638649",
+      "front": "What is training data?",
+      "back": "The data used to teach a computer model.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Training data is like the textbook for a computer. It provides examples the model learns from to make predictions or decisions.",
+      "tags": [
+        "machine learning",
+        "data",
+        "model",
+        "training"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:18.649732"
+    },
+    {
+      "id": "card_1764859647152",
+      "front": "What are 'labels' in machine learning?",
+      "back": "The correct answer we want our model to predict.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Labels are the answers we're trying to teach our model. For example, if we're trying to predict whether an email is spam, the label would be 'spam' or 'not spam'.",
+      "tags": [
+        "supervised learning",
+        "prediction",
+        "training data",
+        "output"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:27.152234"
+    },
+    {
+      "id": "card_1764859648830",
+      "front": "What is a Model?",
+      "back": "A mathematical representation learned from data.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "A model is essentially what an algorithm creates after learning from data. It's used to make predictions on new, unseen data based on patterns it found in the training data. For example, a model might predict if an email is spam based on words it learned were common in spam emails.",
+      "tags": [
+        "Machine Learning",
+        "Data",
+        "Prediction"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:28.830637"
+    },
+    {
+      "id": "card_1764859650627",
+      "front": "Overfitting",
+      "back": "When a model learns the training data too well, including its noise and specific details, leading to poor performance on new, unseen data.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Overfitting occurs because the model essentially memorizes the training data instead of learning the underlying patterns. This results in high accuracy on the training set but poor generalization to new datasets. Techniques like regularization can help prevent overfitting.",
+      "tags": [
+        "Machine Learning",
+        "Model Training",
+        "Generalization",
+        "Bias-Variance Tradeoff"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:30.627597"
+    },
+    {
+      "id": "card_1764859652281",
+      "front": "Linear Regression",
+      "back": "An algorithm used to predict a continuous numerical value.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Linear Regression finds the best straight line to fit the data. It's used to predict things like house prices or temperature based on other information.",
+      "tags": [
+        "Regression",
+        "Prediction",
+        "Algorithm",
+        "Supervised Learning"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:32.281973"
+    },
+    {
+      "id": "card_1764859653851",
+      "front": "Logistic Regression is an algorithm used for what type of task?",
+      "back": "Binary Classification",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Logistic Regression is specifically designed to predict one of two possible outcomes, like whether an email is spam or not spam. It uses a sigmoid function to output a probability between 0 and 1, representing the likelihood of belonging to one class.",
+      "tags": [
+        "Classification",
+        "Supervised Learning",
+        "Probability"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:33.851827"
+    },
+    {
+      "id": "card_1764859656083",
+      "front": "Define Decision Trees.",
+      "back": "A supervised learning algorithm used for both classification and regression tasks. It works by recursively partitioning the data into subsets based on the values of input features, creating a tree-like structure where each internal node represents a test on an attribute, each branch represents an outcome of the test, and each leaf node represents a class label or a predicted value.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Decision Trees are versatile because they can handle both categorical (classification) and numerical (regression) data. The tree structure allows for easy visualization and interpretation of the decision-making process, making it a popular choice in various machine learning applications.",
+      "tags": [
+        "Decision Trees",
+        "Classification",
+        "Regression",
+        "Supervised Learning"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:36.083530"
+    },
+    {
+      "id": "card_1764859657892",
+      "front": "What is an algorithm inspired by the structure of the human brain, used for complex tasks like image and speech recognition?",
+      "back": "A Neural Network",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Neural networks are designed to mimic the way biological neurons work. They learn by adjusting connections between nodes, allowing them to identify intricate patterns in data, making them ideal for tasks like recognizing objects in images or transcribing spoken words.",
+      "tags": [
+        "Machine Learning",
+        "Artificial Intelligence",
+        "Pattern Recognition",
+        "Algorithm"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:17:37.892108"
+    }
+  ],
+  "metadata": {
+    "content_analysis": {
+      "content_type": "lecture_notes",
+      "complexity_level": "beginner",
+      "key_topics": [
+        "Introduction to Machine Learning",
+        "Types of Machine Learning",
+        "Supervised Learning",
+        "Unsupervised Learning",
+        "Reinforcement Learning",
+        "Key Concepts in ML",
+        "Common ML Algorithms"
+      ],
+      "estimated_concepts": 10,
+      "recommended_card_count": 30,
+      "difficulty_distribution": {
+        "easy": 50,
+        "medium": 30,
+        "hard": 20
+      },
+      "recommended_card_types": [
+        "definition",
+        "qa",
+        "cloze"
+      ]
+    },
+    "total_cards": 13,
+    "difficulty_counts": {
+      "easy": 9,
+      "medium": 4,
+      "hard": 0
+    },
+    "card_type_counts": {
+      "qa": 0,
+      "definition": 13,
+      "cloze": 0
+    },
+    "processing_time_seconds": 49.96777391433716,
+    "api_method": "REST API"
+  },
+  "generated_at": "2025-12-04T20:17:41.598763"
+}

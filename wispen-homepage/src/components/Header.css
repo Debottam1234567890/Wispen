@@ -1,0 +1,63 @@
+.header {
+  position: relative;
+  text-align: center;
+  padding: 60px 20px 40px;
+  z-index: 10;
+}
+
+.corner-doodle {
+  position: absolute;
+  opacity: 0.9;
+}
+
+.corner-doodle.bookmark {
+  top: 20px;
+  left: 40px;
+}
+
+.corner-doodle.eraser {
+  top: 30px;
+  right: 50px;
+}
+
+.title-text {
+  margin: 0;
+  padding: 0;
+  position: relative;
+  display: inline-block;
+}
+
+.tagline-text {
+  margin-top: 10px;
+  font-size: 1.8rem;
+}
+
+.ink-splatter {
+  position: absolute;
+  pointer-events: none;
+}
+
+.splatter-1 {
+  top: 50%;
+  left: 20%;
+}
+
+@media (max-width: 768px) {
+  .title-text {
+    font-size: 3.5rem;
+  }
+  
+  .tagline-text {
+    font-size: 1.2rem;
+  }
+  
+  .corner-doodle.bookmark {
+    left: 10px;
+    transform: scale(0.8);
+  }
+  
+  .corner-doodle.eraser {
+    right: 10px;
+    transform: scale(0.8);
+  }
+}

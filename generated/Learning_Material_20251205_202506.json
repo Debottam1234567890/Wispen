@@ -1,0 +1,381 @@
+{
+  "title": "Learning Material",
+  "root_id": "44015aba-a163-4acb-b736-da88f850b9ec",
+  "nodes": {
+    "37fbb268-7e97-4f69-a4e9-f7ee576201b2": {
+      "id": "37fbb268-7e97-4f69-a4e9-f7ee576201b2",
+      "label": "Supervised Learning",
+      "description": "Learning from labeled data to predict outcomes accurately.",
+      "level": 2,
+      "parent_id": "6cd10d8a-78d9-4476-8464-814de9755e4d",
+      "children": [],
+      "related_nodes": [
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "b5fc6a3f-83b2-4623-b883-3ed3702b8d28",
+        "1ca5978d-7874-4e13-98aa-7f382c08c786",
+        "adcbdf09-5786-4d37-be39-7ef2ccd8ffc8",
+        "cc0900f6-dd88-4c88-bfbc-75a41195e5fc",
+        "bf81f674-5588-4cde-9b0a-fca63e495065"
+      ],
+      "importance": 0.8,
+      "tags": [
+        "Supervised",
+        "Labeled Data",
+        "Prediction",
+        "Classification"
+      ],
+      "examples": [
+        "Image Classification",
+        "Spam Detection"
+      ]
+    },
+    "6ea286b1-7c4a-4464-a1cb-939139f6b1d1": {
+      "id": "6ea286b1-7c4a-4464-a1cb-939139f6b1d1",
+      "label": "Unsupervised Learning",
+      "description": "Discovering patterns in unlabeled data without explicit guidance.",
+      "level": 2,
+      "parent_id": "6cd10d8a-78d9-4476-8464-814de9755e4d",
+      "children": [],
+      "related_nodes": [
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "7bbb99da-68b6-418d-81ea-41e62214ad62"
+      ],
+      "importance": 0.8,
+      "tags": [
+        "Unsupervised",
+        "Unlabeled Data",
+        "Clustering",
+        "Pattern Recognition"
+      ],
+      "examples": [
+        "Customer Segmentation",
+        "Anomaly Detection"
+      ]
+    },
+    "cec7cb78-b448-48b3-8a01-5e636bd233a3": {
+      "id": "cec7cb78-b448-48b3-8a01-5e636bd233a3",
+      "label": "Reinforcement Learning",
+      "description": "Learning through trial and error to maximize rewards.",
+      "level": 2,
+      "parent_id": "6cd10d8a-78d9-4476-8464-814de9755e4d",
+      "children": [],
+      "related_nodes": [],
+      "importance": 0.8,
+      "tags": [
+        "Reinforcement",
+        "Rewards",
+        "Trial and Error",
+        "Agent"
+      ],
+      "examples": [
+        "Game Playing",
+        "Robotics"
+      ]
+    },
+    "6cd10d8a-78d9-4476-8464-814de9755e4d": {
+      "id": "6cd10d8a-78d9-4476-8464-814de9755e4d",
+      "label": "Types of Machine Learning",
+      "description": "Different approaches to learning, based on data and feedback.",
+      "level": 1,
+      "parent_id": "44015aba-a163-4acb-b736-da88f850b9ec",
+      "children": [
+        "37fbb268-7e97-4f69-a4e9-f7ee576201b2",
+        "6ea286b1-7c4a-4464-a1cb-939139f6b1d1",
+        "cec7cb78-b448-48b3-8a01-5e636bd233a3"
+      ],
+      "related_nodes": [],
+      "importance": 0.9,
+      "tags": [
+        "ML",
+        "Types",
+        "Supervised",
+        "Unsupervised"
+      ],
+      "examples": [
+        "Classification",
+        "Clustering"
+      ]
+    },
+    "960e447f-1741-4dd7-a261-4bdcceda1e50": {
+      "id": "960e447f-1741-4dd7-a261-4bdcceda1e50",
+      "label": "Training Data",
+      "description": "The dataset used to train a machine learning model.",
+      "level": 2,
+      "parent_id": "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+      "children": [],
+      "related_nodes": [
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "b5fc6a3f-83b2-4623-b883-3ed3702b8d28"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Data",
+        "Training",
+        "Dataset",
+        "Learning"
+      ],
+      "examples": [
+        "Image dataset",
+        "Text corpus"
+      ]
+    },
+    "7bbb99da-68b6-418d-81ea-41e62214ad62": {
+      "id": "7bbb99da-68b6-418d-81ea-41e62214ad62",
+      "label": "Features",
+      "description": "Input variables used by the model to make predictions.",
+      "level": 2,
+      "parent_id": "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+      "children": [],
+      "related_nodes": [],
+      "importance": 0.7,
+      "tags": [
+        "Input",
+        "Variables",
+        "Prediction",
+        "Attributes"
+      ],
+      "examples": [
+        "Pixel intensity",
+        "Word frequency"
+      ]
+    },
+    "b5fc6a3f-83b2-4623-b883-3ed3702b8d28": {
+      "id": "b5fc6a3f-83b2-4623-b883-3ed3702b8d28",
+      "label": "Labels",
+      "description": "The output variable that the model is trying to predict.",
+      "level": 2,
+      "parent_id": "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+      "children": [],
+      "related_nodes": [],
+      "importance": 0.7,
+      "tags": [
+        "Output",
+        "Target",
+        "Prediction",
+        "Classification"
+      ],
+      "examples": [
+        "Cat/Dog",
+        "Spam/Not Spam"
+      ]
+    },
+    "38aa45a4-5902-483d-8e05-fb6ab6e06e17": {
+      "id": "38aa45a4-5902-483d-8e05-fb6ab6e06e17",
+      "label": "Overfitting",
+      "description": "When a model performs well on training data but poorly on new data.",
+      "level": 2,
+      "parent_id": "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+      "children": [],
+      "related_nodes": [
+        "960e447f-1741-4dd7-a261-4bdcceda1e50"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Model",
+        "Performance",
+        "Generalization",
+        "Bias"
+      ],
+      "examples": [
+        "High accuracy on training set",
+        "Low accuracy on test set"
+      ]
+    },
+    "68e0de64-c91c-47c5-81a3-a054ae7b66bd": {
+      "id": "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+      "label": "Key Concepts in Machine Learning",
+      "description": "Essential terms and ideas for understanding ML models.",
+      "level": 1,
+      "parent_id": "44015aba-a163-4acb-b736-da88f850b9ec",
+      "children": [
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "b5fc6a3f-83b2-4623-b883-3ed3702b8d28",
+        "38aa45a4-5902-483d-8e05-fb6ab6e06e17"
+      ],
+      "related_nodes": [],
+      "importance": 0.9,
+      "tags": [
+        "ML",
+        "Concepts",
+        "Data",
+        "Model"
+      ],
+      "examples": [
+        "Feature selection",
+        "Model evaluation"
+      ]
+    },
+    "1ca5978d-7874-4e13-98aa-7f382c08c786": {
+      "id": "1ca5978d-7874-4e13-98aa-7f382c08c786",
+      "label": "Linear Regression",
+      "description": "Predicting continuous values based on a linear relationship.",
+      "level": 2,
+      "parent_id": "6ea9b436-18e4-46a0-b532-c66560d9a0a4",
+      "children": [],
+      "related_nodes": [
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "38aa45a4-5902-483d-8e05-fb6ab6e06e17"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Regression",
+        "Continuous",
+        "Prediction",
+        "Linear"
+      ],
+      "examples": [
+        "Predicting house prices",
+        "Estimating sales"
+      ]
+    },
+    "adcbdf09-5786-4d37-be39-7ef2ccd8ffc8": {
+      "id": "adcbdf09-5786-4d37-be39-7ef2ccd8ffc8",
+      "label": "Logistic Regression",
+      "description": "Predicting binary outcomes using a logistic function.",
+      "level": 2,
+      "parent_id": "6ea9b436-18e4-46a0-b532-c66560d9a0a4",
+      "children": [],
+      "related_nodes": [
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "38aa45a4-5902-483d-8e05-fb6ab6e06e17"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Classification",
+        "Binary",
+        "Probability",
+        "Regression"
+      ],
+      "examples": [
+        "Spam detection",
+        "Disease prediction"
+      ]
+    },
+    "cc0900f6-dd88-4c88-bfbc-75a41195e5fc": {
+      "id": "cc0900f6-dd88-4c88-bfbc-75a41195e5fc",
+      "label": "Decision Trees",
+      "description": "Using a tree-like structure for classification and regression.",
+      "level": 2,
+      "parent_id": "6ea9b436-18e4-46a0-b532-c66560d9a0a4",
+      "children": [],
+      "related_nodes": [
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "38aa45a4-5902-483d-8e05-fb6ab6e06e17"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Classification",
+        "Regression",
+        "Tree",
+        "Decision"
+      ],
+      "examples": [
+        "Credit risk assessment",
+        "Medical diagnosis"
+      ]
+    },
+    "bf81f674-5588-4cde-9b0a-fca63e495065": {
+      "id": "bf81f674-5588-4cde-9b0a-fca63e495065",
+      "label": "Neural Networks",
+      "description": "Complex models for pattern recognition and prediction.",
+      "level": 2,
+      "parent_id": "6ea9b436-18e4-46a0-b532-c66560d9a0a4",
+      "children": [],
+      "related_nodes": [
+        "7bbb99da-68b6-418d-81ea-41e62214ad62",
+        "960e447f-1741-4dd7-a261-4bdcceda1e50",
+        "38aa45a4-5902-483d-8e05-fb6ab6e06e17"
+      ],
+      "importance": 0.7,
+      "tags": [
+        "Deep Learning",
+        "Networks",
+        "Pattern Recognition",
+        "AI"
+      ],
+      "examples": [
+        "Image recognition",
+        "Natural language processing"
+      ]
+    },
+    "6ea9b436-18e4-46a0-b532-c66560d9a0a4": {
+      "id": "6ea9b436-18e4-46a0-b532-c66560d9a0a4",
+      "label": "Common Machine Learning Algorithms",
+      "description": "Popular algorithms used for various machine learning tasks.",
+      "level": 1,
+      "parent_id": "44015aba-a163-4acb-b736-da88f850b9ec",
+      "children": [
+        "1ca5978d-7874-4e13-98aa-7f382c08c786",
+        "adcbdf09-5786-4d37-be39-7ef2ccd8ffc8",
+        "cc0900f6-dd88-4c88-bfbc-75a41195e5fc",
+        "bf81f674-5588-4cde-9b0a-fca63e495065"
+      ],
+      "related_nodes": [
+        "1ca5978d-7874-4e13-98aa-7f382c08c786",
+        "adcbdf09-5786-4d37-be39-7ef2ccd8ffc8",
+        "cc0900f6-dd88-4c88-bfbc-75a41195e5fc",
+        "bf81f674-5588-4cde-9b0a-fca63e495065"
+      ],
+      "importance": 0.9,
+      "tags": [
+        "ML",
+        "Algorithms",
+        "Regression",
+        "Classification"
+      ],
+      "examples": [
+        "Prediction",
+        "Clustering"
+      ]
+    },
+    "44015aba-a163-4acb-b736-da88f850b9ec": {
+      "id": "44015aba-a163-4acb-b736-da88f850b9ec",
+      "label": "Machine Learning Fundamentals",
+      "description": "Understanding the core concepts, types, and algorithms of machine learning.",
+      "level": 0,
+      "parent_id": null,
+      "children": [
+        "6cd10d8a-78d9-4476-8464-814de9755e4d",
+        "68e0de64-c91c-47c5-81a3-a054ae7b66bd",
+        "6ea9b436-18e4-46a0-b532-c66560d9a0a4"
+      ],
+      "related_nodes": [],
+      "importance": 1.0,
+      "tags": [
+        "ML",
+        "AI",
+        "Fundamentals",
+        "Learning"
+      ],
+      "examples": [
+        "Spam filtering",
+        "Image recognition"
+      ]
+    }
+  },
+  "metadata": {
+    "total_nodes": 15,
+    "max_depth": 2,
+    "generation_method": "agentic_ai_v2",
+    "processing_time_seconds": 18.312223196029663,
+    "content_size": 1149,
+    "content_analysis": {
+      "main_topic": "Machine Learning Fundamentals: Concepts, Types, and Algorithms",
+      "major_themes": [
+        "Introduction to Machine Learning",
+        "Types of Machine Learning",
+        "Key Concepts in Machine Learning",
+        "Common Machine Learning Algorithms"
+      ],
+      "estimated_depth": 3,
+      "complexity": "moderate",
+      "content_type": "educational"
+    },
+    "api_method": "REST API with retry"
+  },
+  "generated_at": "2025-12-05T20:24:58.048894"
+}

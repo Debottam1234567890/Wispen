@@ -1,0 +1,213 @@
+{
+  "title": "Learning Material",
+  "cards": [
+    {
+      "id": "card_1764859855862",
+      "front": "Machine Learning",
+      "back": "A type of AI that lets computers learn from data without being specifically told what to do.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Machine learning algorithms improve automatically through experience. For example, a program can learn to identify cats in pictures by being shown many pictures of cats.",
+      "tags": [
+        "AI",
+        "Algorithms",
+        "Learning",
+        "Data"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:20:55.862946"
+    },
+    {
+      "id": "card_1764859857517",
+      "front": "Artificial Intelligence",
+      "back": "Broad field of computer science focused on creating intelligent agents.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Artificial intelligence aims to make computers think and act like humans. This involves developing algorithms and systems that can solve problems, learn, and make decisions.",
+      "tags": [
+        "AI",
+        "Computer Science",
+        "Intelligence"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:20:57.517782"
+    },
+    {
+      "id": "card_1764859859338",
+      "front": "What type of machine learning uses labeled data to learn?",
+      "back": "Supervised Learning",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Supervised learning is like learning with a teacher. The 'labeled' data acts as the teacher, showing the algorithm what the correct answer is for each example, allowing it to learn and make predictions on new data.",
+      "tags": [
+        "machine learning",
+        "supervised learning",
+        "labeled data"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:20:59.338499"
+    },
+    {
+      "id": "card_1764859861154",
+      "front": "Unsupervised Learning",
+      "back": "Finding patterns in data without labels.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Unsupervised learning algorithms explore data on their own to discover hidden structures. Unlike supervised learning, there are no 'right' answers provided during training, so the algorithm must learn to identify patterns without guidance. For example, grouping customers based on their purchasing behavior.",
+      "tags": [
+        "Machine Learning",
+        "Unsupervised",
+        "Patterns",
+        "Data"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:01.154061"
+    },
+    {
+      "id": "card_1764859863476",
+      "front": "Reinforcement Learning",
+      "back": "A type of machine learning where an agent learns to make decisions by interacting with an environment to maximize a cumulative reward. The agent learns through trial and error, receiving feedback in the form of rewards or penalties for its actions.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Reinforcement learning (RL) differs from supervised learning because it doesn't require labeled data. Instead, an agent explores the environment and learns which actions lead to the most reward over time. Think of a dog learning tricks - it gets treats (rewards) for performing the trick correctly.",
+      "tags": [
+        "Machine Learning",
+        "Agent",
+        "Reward",
+        "Policy"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:03.476247"
+    },
+    {
+      "id": "card_1764859865429",
+      "front": "Training Data",
+      "back": "A dataset used to teach a model how to make predictions.",
+      "type": "definition",
+      "difficulty": "easy",
+      "explanation": "Training data is like the textbook a student uses to learn. The model learns patterns from this data, enabling it to make predictions on new, unseen data. Without training data, a model would have no basis for making informed decisions.",
+      "tags": [
+        "data",
+        "model",
+        "machine learning"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:05.429397"
+    },
+    {
+      "id": "card_1764859871594",
+      "front": "Overfitting",
+      "back": "A model performs well on the training data but poorly on new, unseen data.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Overfitting occurs when a model learns the training data too well, including its noise and specific patterns. This leads to high accuracy on the training set but poor generalization to new data. Regularization techniques are often used to prevent overfitting.",
+      "tags": [
+        "Overfitting",
+        "Machine Learning",
+        "Generalization",
+        "Model Complexity"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:11.594973"
+    },
+    {
+      "id": "card_1764859873977",
+      "front": "What is Linear Regression?",
+      "back": "A supervised learning algorithm that models the relationship between a dependent variable and one or more independent variables by fitting a linear equation to observed data. It's used for predicting continuous numerical values.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Linear Regression aims to find the best-fitting line (or hyperplane in higher dimensions) that minimizes the difference between predicted and actual values. This allows for making predictions about future data points based on the learned linear relationship. It is a supervised learning algorithm because it learns from labeled data (input features and corresponding target values).",
+      "tags": [
+        "Regression",
+        "Supervised Learning",
+        "Prediction",
+        "Linear Model"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:13.977563"
+    },
+    {
+      "id": "card_1764859877478",
+      "front": "What type of algorithm is Logistic Regression used for?",
+      "back": "Binary classification.",
+      "type": "definition",
+      "difficulty": "medium",
+      "explanation": "Logistic Regression is specifically designed to predict the probability of a binary outcome (0 or 1, yes or no). It uses a sigmoid function to map predicted values between 0 and 1, making it suitable for classification tasks where you need to assign data points to one of two categories.",
+      "tags": [
+        "Classification",
+        "Supervised Learning",
+        "Binary Classification",
+        "Sigmoid Function"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:17.478250"
+    },
+    {
+      "id": "card_1764859881214",
+      "front": "Explain the vanishing gradient problem in deep neural networks and describe a strategy to mitigate it.",
+      "back": "The vanishing gradient problem occurs when gradients become extremely small during backpropagation, preventing weights in earlier layers from updating effectively. This is often caused by activation functions with gradients that saturate at 0 (e.g., sigmoid, tanh). Mitigation strategies include using ReLU or Leaky ReLU activation functions (which don't saturate as easily), batch normalization (which normalizes activations), and skip connections (e.g., in ResNets) that allow gradients to bypass layers.",
+      "type": "definition",
+      "difficulty": "hard",
+      "explanation": "The vanishing gradient problem is a significant obstacle in training deep networks. Understanding its cause and the effectiveness of different mitigation strategies is crucial for building successful deep learning models. ReLU and skip connections directly address the issue of diminishing gradients, while batch normalization helps stabilize training and allows for higher learning rates.",
+      "tags": [
+        "vanishing gradient",
+        "backpropagation",
+        "ReLU",
+        "deep learning"
+      ],
+      "source_reference": null,
+      "confidence_score": 0.85,
+      "created_at": "2025-12-04T20:21:21.214224"
+    }
+  ],
+  "metadata": {
+    "content_analysis": {
+      "content_type": "lecture_notes",
+      "complexity_level": "beginner",
+      "key_topics": [
+        "Introduction to Machine Learning",
+        "Types of Machine Learning",
+        "Supervised Learning",
+        "Unsupervised Learning",
+        "Reinforcement Learning",
+        "Key Concepts in Machine Learning",
+        "Common Machine Learning Algorithms"
+      ],
+      "estimated_concepts": 10,
+      "recommended_card_count": 30,
+      "difficulty_distribution": {
+        "easy": 50,
+        "medium": 30,
+        "hard": 20
+      },
+      "recommended_card_types": [
+        "qa",
+        "definition",
+        "cloze"
+      ]
+    },
+    "total_cards": 10,
+    "difficulty_counts": {
+      "easy": 5,
+      "medium": 4,
+      "hard": 1
+    },
+    "card_type_counts": {
+      "qa": 0,
+      "definition": 10,
+      "cloze": 0
+    },
+    "processing_time_seconds": 47.11408591270447,
+    "api_method": "REST API"
+  },
+  "generated_at": "2025-12-04T20:21:24.957388"
+}

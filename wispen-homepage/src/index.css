@@ -1,0 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Indie+Flower&family=Patrick+Hand&family=Permanent+Marker&display=swap');
+
+:root {
+  /* Color Variables */
+  --vapor-cyan: #7DF9FF;
+  --mystic-lavender: #B49FCC;
+  --dream-pink: #FF8EC6;
+  --chalk-white: #F4F1E8;
+  --ink-shadow: #4A4A5E;
+  
+  /* Typography */
+  --font-title: 'Caveat', cursive;
+  --font-tagline: 'Indie Flower', cursive;
+  --font-ui: 'Patrick Hand', cursive;
+  
+  /* Gradients */
+  --gradient-vapor: radial-gradient(circle, var(--vapor-cyan) 0%, var(--mystic-lavender) 50%, var(--dream-pink) 100%);
+  --gradient-button-1: linear-gradient(135deg, var(--vapor-cyan) 0%, var(--mystic-lavender) 50%, var(--dream-pink) 100%);
+  --gradient-button-2: linear-gradient(135deg, var(--mystic-lavender) 0%, var(--dream-pink) 100%);
+  --gradient-button-3: linear-gradient(135deg, var(--dream-pink) 0%, var(--vapor-cyan) 100%);
+  --gradient-background: radial-gradient(circle at center, var(--chalk-white) 0%, rgba(180, 159, 204, 0.7) 100%);
+  
+  /* Shadows */
+  --glow-cyan: 0 0 20px var(--vapor-cyan), 0 0 40px var(--vapor-cyan);
+  --shadow-scribble: 0 4px 8px rgba(74, 74, 94, 0.15);
+  --shadow-button: 0 0 15px rgba(125, 249, 255, 0.6);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-ui);
+  background: var(--gradient-background);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+}
+
+/* Paper texture overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.02) 2px,
+      rgba(0, 0, 0, 0.02) 4px
+    );
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.3;
+}
+
+#root {
+  position: relative;
+  z-index: 2;
+}
+
+/* Text Styles */
+.title-text {
+  font-family: var(--font-title);
+  font-size: 5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--vapor-cyan) 0%, var(--mystic-lavender) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 2px 2px 4px rgba(74, 74, 94, 0.2);
+  letter-spacing: 0.05em;
+}
+
+.tagline-text {
+  font-family: var(--font-tagline);
+  font-size: 1.5rem;
+  color: var(--ink-shadow);
+  opacity: 0.8;
+}
+
+.button-text {
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  color: var(--chalk-white);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.handwritten-text {
+  font-family: var(--font-tagline);
+  font-size: 0.9rem;
+  color: var(--ink-shadow);
+}
+
+/* Utility Classes */
+.wobble {
+  animation: wobble 3s ease-in-out infinite;
+}
+
+@keyframes wobble {
+  0%, 100% { transform: rotate(-1deg) translateY(0); }
+  25% { transform: rotate(1deg) translateY(-2px); }
+  50% { transform: rotate(-0.5deg) translateY(0); }
+  75% { transform: rotate(0.5deg) translateY(2px); }
+}
+
+.float {
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% { filter: brightness(1) drop-shadow(0 0 10px var(--vapor-cyan)); }
+  50% { filter: brightness(1.2) drop-shadow(0 0 20px var(--vapor-cyan)); }
+}
+
+.rotate-slow {
+  animation: rotateSlow 30s linear infinite;
+}
+
+@keyframes rotateSlow {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.fade-in {
+  animation: fadeIn 2s ease-in;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--chalk-white);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mystic-lavender);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vapor-cyan);
+}

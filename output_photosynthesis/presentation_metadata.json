@@ -1,0 +1,81 @@
+{
+  "presentation_title": "Photosynthesis: Life's Green Engine",
+  "slides": [
+    {
+      "slide_number": 1,
+      "title": "Photosynthesis: Capturing Sunlight's Energy",
+      "points": [
+        "Plants use sunlight to make food.",
+        "This process is called photosynthesis.",
+        "It's vital for life on Earth.",
+        "It converts light energy to chemical energy."
+      ],
+      "narration": "Welcome to the world of photosynthesis! It's a fascinating process where plants, algae, and some bacteria use sunlight to create their own food. This remarkable ability underpins nearly all life on our planet, providing the energy that fuels ecosystems. Let's dive into the basics of how this works.",
+      "image_prompt": "illustration of plant cell structure, photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, chloroplasts, sunlight, simplified cell diagram, trending on Artstation, plant cell structure",
+      "visual_connection": "This slide introduces the core concept. The next slide will zoom out to show the necessary inputs."
+    },
+    {
+      "slide_number": 2,
+      "title": "Ingredients for Photosynthesis: CO2 & H2O",
+      "points": [
+        "Carbon dioxide (CO2) from the air.",
+        "Water (H2O) from the soil.",
+        "Sunlight provides the energy.",
+        "Chlorophyll captures sunlight."
+      ],
+      "narration": "Photosynthesis requires specific ingredients to get started. Plants absorb carbon dioxide from the atmosphere through tiny pores in their leaves. They also draw water from the soil, which travels up to the leaves. Sunlight provides the energy to power the reaction, and chlorophyll, a green pigment, captures that sunlight.",
+      "image_prompt": "illustration of water molecules being absorbed by roots, carbon dioxide entering a leaf, sunlight, photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, roots, leaves, stoma, trending on Artstation, CO2 and H2O absorption",
+      "visual_connection": "Building upon the first slide, this slide shows the inputs. The next slide will detail the process."
+    },
+    {
+      "slide_number": 3,
+      "title": "The Photosynthesis Process: A Closer Look",
+      "points": [
+        "Two main stages: light-dependent & independent.",
+        "Light reactions convert light to energy.",
+        "Dark reactions use energy to fix CO2.",
+        "Sugars (glucose) are produced as food."
+      ],
+      "narration": "Photosynthesis isn't a single step, but rather a series of reactions. It's generally divided into two main stages: the light-dependent reactions and the light-independent reactions, also known as the Calvin cycle. In the light reactions, sunlight's energy is captured and converted into chemical energy. The dark reactions then use this energy to convert carbon dioxide into sugars, providing the plant with its food.",
+      "image_prompt": "illustration of light-dependent and light-independent reactions, photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, thylakoid membrane, stroma, ATP, NADPH, simplified chemical equations, trending on Artstation, reaction pathways",
+      "visual_connection": "This slide details the process. The next slide shows the outputs."
+    },
+    {
+      "slide_number": 4,
+      "title": "Outputs: Sugar & Oxygen (O2)",
+      "points": [
+        "Glucose (sugar) fuels plant growth.",
+        "Oxygen (O2) is released as a byproduct.",
+        "O2 is essential for animal respiration.",
+        "Photosynthesis maintains atmosphere."
+      ],
+      "narration": "The products of photosynthesis are just as important as the process itself. The sugar, glucose, is used by the plant as a source of energy to grow and develop. Perhaps even more crucial for us, oxygen is released as a byproduct of the light reactions. This oxygen is what we, and many other organisms, breathe to survive.",
+      "image_prompt": "illustration of glucose molecule, oxygen molecules, photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, plant releasing oxygen, glucose being used for growth, trending on Artstation, glucose and oxygen output",
+      "visual_connection": "This slide shows the products of the process. The final slide summarizes the importance."
+    },
+    {
+      "slide_number": 5,
+      "title": "Why Photosynthesis Matters: The Big Picture",
+      "points": [
+        "Provides food for almost all ecosystems.",
+        "Produces oxygen for animal respiration.",
+        "Removes carbon dioxide from the air.",
+        "Essential for life as we know it."
+      ],
+      "narration": "Photosynthesis is truly a cornerstone of life on Earth. It's not just about plants making their own food; it's about providing the base of the food chain for nearly all ecosystems. It's about producing the oxygen we breathe and removing excess carbon dioxide from the atmosphere. Without photosynthesis, our planet would be a very different, and much less hospitable, place.",
+      "image_prompt": "illustration of a global ecosystem, photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, plants, animals, atmosphere, oxygen cycle, carbon cycle, trending on Artstation, global impact",
+      "visual_connection": "This slide summarizes the entire presentation."
+    }
+  ],
+  "visual_style": {
+    "style": "Stylized biological illustration, reminiscent of vintage botanical prints but with a modern, clean feel",
+    "colors": [
+      "#7CB342",
+      "#388E3C",
+      "#A5D6A7",
+      "#FFFFFF"
+    ],
+    "common_theme": "A single, stylized sun graphic subtly placed in the corner of each slide, acting as a consistent visual anchor.",
+    "base_prompt": "illustration of [subject matter], photosynthesis, botanical, stylized, vintage print, clean lines, vibrant colors, detailed, [additional details], trending on Artstation"
+  }
+}

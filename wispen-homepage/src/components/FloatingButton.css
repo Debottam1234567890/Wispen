@@ -1,0 +1,73 @@
+.floating-button-container {
+  position: relative;
+  cursor: pointer;
+  margin: 20px;
+}
+
+.floating-button {
+  padding: 18px 40px;
+  border-radius: 25px;
+  border: 3px solid var(--chalk-white);
+  box-shadow: var(--shadow-scribble);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.floating-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.floating-button:hover::before {
+  opacity: 1;
+}
+
+.button-icon {
+  font-size: 1.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+.button-text {
+  font-family: var(--font-ui);
+  font-size: 1.3rem;
+  color: var(--chalk-white);
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.button-shadow {
+  position: absolute;
+  bottom: -15px;
+  left: 0;
+  width: 100%;
+  transition: all 0.3s ease;
+}
+
+.hover-arrow {
+  position: absolute;
+  top: -40px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.sparkle-particle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  font-size: 1rem;
+  pointer-events: none;
+  z-index: 5;
+}

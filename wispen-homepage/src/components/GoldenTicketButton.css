@@ -1,0 +1,226 @@
+.golden-ticket-wrapper {
+  cursor: pointer;
+  margin: 30px;
+  filter: drop-shadow(0 10px 30px rgba(218, 165, 32, 0.4));
+  transition: filter 0.3s ease;
+}
+
+.golden-ticket-wrapper:hover {
+  filter: drop-shadow(0 15px 40px rgba(218, 165, 32, 0.6));
+}
+
+.golden-ticket {
+  position: relative;
+  width: 350px;
+  height: 220px;
+  background: linear-gradient(135deg, 
+    #FFD700 0%, 
+    #FFA500 25%, 
+    #FFD700 50%, 
+    #FF8C00 75%, 
+    #FFD700 100%);
+  border-radius: 15px;
+  padding: 20px;
+  box-shadow: 
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    0 5px 15px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  transition: all 0.3s ease;
+  border: 3px solid #DAA520;
+}
+
+.golden-ticket.glowing {
+  box-shadow: 
+    inset 0 2px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
+    0 5px 20px rgba(218, 165, 32, 0.5),
+    0 0 30px rgba(255, 215, 0, 0.4);
+}
+
+/* Decorative corners */
+.ticket-corner {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 2px solid #8B4513;
+}
+
+.corner-tl {
+  top: 8px;
+  left: 8px;
+  border-right: none;
+  border-bottom: none;
+}
+
+.corner-tr {
+  top: 8px;
+  right: 8px;
+  border-left: none;
+  border-bottom: none;
+}
+
+.corner-bl {
+  bottom: 8px;
+  left: 8px;
+  border-right: none;
+  border-top: none;
+}
+
+.corner-br {
+  bottom: 8px;
+  right: 8px;
+  border-left: none;
+  border-top: none;
+}
+
+/* Border decoration */
+.ticket-border {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Content */
+.ticket-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: center;
+}
+
+.ticket-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  margin-bottom: 10px;
+}
+
+.ornament {
+  font-size: 1.5rem;
+  color: #8B4513;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ticket-title {
+  font-family: 'Permanent Marker', cursive;
+  font-size: 1.1rem;
+  color: #8B4513;
+  letter-spacing: 3px;
+  text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+  font-weight: bold;
+}
+
+.ticket-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.willy-wonka-text {
+  font-family: 'Caveat', cursive;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #4A0E0E;
+  text-shadow: 
+    2px 2px 0 rgba(255, 255, 255, 0.5),
+    3px 3px 5px rgba(0, 0, 0, 0.2);
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.chocolate-decoration {
+  display: flex;
+  gap: 12px;
+  font-size: 1.5rem;
+  animation: chocolateBounce 2s ease-in-out infinite;
+}
+
+@keyframes chocolateBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.chocolate-decoration span:nth-child(2) {
+  animation: chocolateSpin 3s linear infinite;
+}
+
+@keyframes chocolateSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.ticket-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-top: 2px dashed #8B4513;
+  padding-top: 12px;
+}
+
+.ticket-tagline {
+  font-family: 'Indie Flower', cursive;
+  font-size: 0.95rem;
+  color: #5D3A1A;
+  letter-spacing: 1px;
+}
+
+.ticket-number {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 0.85rem;
+  color: #8B4513;
+  opacity: 0.8;
+  letter-spacing: 2px;
+}
+
+/* Shimmer overlay */
+.shimmer-overlay {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 30%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+  z-index: 3;
+}
+
+/* Golden sparkles */
+.golden-sparkle {
+  position: absolute;
+  font-size: 1.2rem;
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .golden-ticket {
+    width: 300px;
+    height: 190px;
+    padding: 15px;
+  }
+
+  .willy-wonka-text {
+    font-size: 2.2rem;
+  }
+
+  .ticket-title {
+    font-size: 0.95rem;
+  }
+}
