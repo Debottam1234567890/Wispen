@@ -11,6 +11,7 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const animationFrameRef = useRef<number | null>(null);
+    const [needsManualPlay, setNeedsManualPlay] = useState(false);
 
     // Canvas Rendering Loop
     useEffect(() => {
@@ -84,12 +85,26 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
     // Ensure Play
     useEffect(() => {
         if (videoRef.current) {
+            // Explicitly set muted for Safari
+            videoRef.current.muted = true;
+
             console.log(`[VideoSlide] Attempting to play: ${src}`);
-            videoRef.current.play()
-                .then(() => console.log(`[VideoSlide] Playing: ${src}`))
-                .catch((e) => {
-                    console.error(`[VideoSlide] Playback failed for ${src}:`, e);
-                });
+            const playPromise = videoRef.current.play();
+
+            if (playPromise !== undefined) {
+                playPromise
+                    .then(() => {
+                        console.log(`[VideoSlide] Playing: ${src}`);
+                        setNeedsManualPlay(false);
+                    })
+                    .catch((e) => {
+                        console.error(`[VideoSlide] Playback failed for ${src}:`, e);
+                        setNeedsManualPlay(true);
+                    });
+            } else {
+                // Older browsers
+                setNeedsManualPlay(true);
+            }
 
             // Log video errors
             videoRef.current.onerror = () => {
@@ -98,6 +113,15 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
         }
     }, [src]);
 
+    const handleManualPlay = () => {
+        if (videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play()
+                .then(() => setNeedsManualPlay(false))
+                .catch(e => console.error("Manual play failed:", e));
+        }
+    };
+
     return (
         <>
             <video
@@ -105,7 +129,7 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
                 src={src}
                 muted
                 playsInline
-                autoPlay
+                loop={false}
                 onEnded={onEnded}
                 style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none' }}
                 crossOrigin="anonymous"
@@ -118,6 +142,22 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
                     display: 'block'
                 }}
             />
+
+            {needsManualPlay && (
+                <div
+                    onClick={handleManualPlay}
+                    style={{
+                        position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                        background: 'rgba(0,0,0,0.4)', display: 'flex', flexDirection: 'column',
+                        justifyContent: 'center', alignItems: 'center', cursor: 'pointer', zIndex: 10
+                    }}
+                >
+                    <div style={{ fontSize: '4rem', color: 'white' }}>▶️</div>
+                    <div style={{ color: 'white', fontFamily: 'Indie Flower', fontSize: '1.5rem', marginTop: '10px' }}>
+                        Tap to Play
+                    </div>
+                </div>
+            )}
         </>
     );
 };
