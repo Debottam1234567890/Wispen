@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Voice Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        textarea {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Voice Test Page</h1>
+    <p>Use this page to verify if the Backend Voice Engine is working.</p>
+
+    <textarea id="text"
+        rows="4">Hello! This is a test of the Wispen Voice system. If you can hear this, the backend is working perfectly.</textarea><br>
+    <button onclick="speak()">Generate & Play Voice</button>
+
+    <div id="status">Ready</div>
+    <audio id="player" controls style="margin-top: 20px; display: block; width: 100%;"></audio>
+
+    <script>
+        async function speak() {
+            const text = document.getElementById('text').value;
+            const status = document.getElementById('status');
+            const player = document.getElementById('player');
+
+            status.textContent = "Generating... (Calling backend)";
+            status.style.color = "blue";
+
+            try {
+                const response = await fetch('http://localhost:5000/tts', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text: text })
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    player.src = url;
+                    status.textContent = "Playing... (Success!)";
+                    status.style.color = "green";
+
+                    try {
+                        await player.play();
+                    } catch (playErr) {
+                        status.textContent = "Generated OK, but Auto-Play blocked. Click Play on the player below.";
+                        status.style.color = "orange";
+                    }
+                } else {
+                    const err = await response.text();
+                    try {
+                        const jsonErr = JSON.parse(err);
+                        status.textContent = "Backend Error: " + (jsonErr.error || err);
+                    } catch (e) {
+                        status.textContent = "Backend Error: " + err;
+                    }
+                    status.style.color = "red";
+                }
+            } catch (e) {
+                status.textContent = "Fetch Error (Is backend running?): " + e;
+                status.style.color = "red";
+            }
+        }
+    </script>
+</body>
+
+</html>

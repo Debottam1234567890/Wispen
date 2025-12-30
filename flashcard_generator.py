@@ -38,8 +38,10 @@ from api_key_manager import APIKeyManager, call_gemini_with_retry
 # Initialize colorama
 init(autoreset=True)
 
-# Gemini API Configuration
+# AI API Configuration
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+GROQ_MODEL = "llama-3.3-70b-versatile"
 
 # Content chunking settings
 MAX_CONTENT_SIZE = 200000  # ~200KB per chunk for analysis
@@ -124,6 +126,7 @@ class FlashcardGenerator:
     def __init__(
         self,
         gemini_api_key: Optional[str] = None,
+        groq_api_key: Optional[str] = None,
         api_key_manager: Optional[APIKeyManager] = None,
         model_name: str = "gemini-2.0-flash",
         verbose: bool = True
@@ -131,6 +134,7 @@ class FlashcardGenerator:
         """Initialize the Flashcard Generator"""
         self.model_name = model_name
         self.verbose = verbose
+        self.groq_api_key = groq_api_key or os.getenv("GROQ_API_KEY")
         
         if api_key_manager:
             self.api_key_manager = api_key_manager
@@ -142,15 +146,21 @@ class FlashcardGenerator:
                     self.api_key_manager = None
                     self.gemini_api_key = gemini_api_key
                 else:
-                    raise ValueError(
-                        "Gemini API key required. Set GEMINI_API_KEY1 and GEMINI_API_KEY2 "
-                        "in environment or pass gemini_api_key"
-                    )
+                    # If we have no Gemini keys, we might still have Groq
+                    self.api_key_manager = None
+                    self.gemini_api_key = gemini_api_key
+                    if not self.groq_api_key:
+                        raise ValueError(
+                            "At least one API key (Gemini or Groq) is required."
+                        )
         
-        key_count = len(self.api_key_manager.get_key_list()) if self.api_key_manager else 1
+        key_count = len(self.api_key_manager.get_key_list()) if self.api_key_manager else (1 if getattr(self, 'gemini_api_key', None) else 0)
+        provider_info = f"Gemini ({key_count} keys)" if key_count > 0 else "No Gemini keys"
+        if self.groq_api_key:
+            provider_info += " + Groq"
+
         self._log(
-            f"✓ Flashcard Generator initialized with {model_name} "
-            f"({key_count} API key(s))",
+            f"✓ Flashcard Generator initialized with {provider_info}",
             Fore.GREEN
         )
     
@@ -206,356 +216,226 @@ class FlashcardGenerator:
         
         return response
     
-    def _call_gemini(
+    def _call_groq(
+        self,
+        prompt: str,
+        temperature: float = 0.7,
+        max_tokens: int = 4096
+    ) -> str:
+        """Call Groq API with fallback to multiple models on rate limit"""
+        if not self.groq_api_key:
+            return "Error: Groq API key not provided"
+            
+        models_to_try = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "llama-3.2-1b-preview",
+            "llama-3.2-3b-preview",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ]
+        
+        last_error = "Unknown error"
+        
+        for model in models_to_try:
+            for attempt in range(2): # 2 attempts per model
+                try:
+                    self._log(f"🤖 Sending to Groq ({model}, try {attempt+1})...", Fore.CYAN)
+                    response = requests.post(
+                        GROQ_API_URL,
+                        headers={
+                            "Authorization": f"Bearer {self.groq_api_key}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": model,
+                            "messages": [{"role": "user", "content": prompt}],
+                            "temperature": temperature,
+                            "max_tokens": max_tokens
+                        },
+                        timeout=30
+                    )
+                    
+                    if response.status_code == 200:
+                        data = response.json()
+                        if "choices" in data and len(data["choices"]) > 0:
+                            return data["choices"][0]["message"]["content"]
+                        else:
+                            last_error = "No response generated from Groq"
+                            continue
+                    elif response.status_code == 429:
+                        wait_time = (attempt + 1) * 4 # Increased backoff
+                        self._log(f"⚠️ Groq Rate Limit (429) on {model}. Waiting {wait_time}s...", Fore.YELLOW)
+                        time.sleep(wait_time)
+                        last_error = f"Rate limited on {model}"
+                        continue
+                    else:
+                        self._log(f"❌ Groq API error ({response.status_code}) on {model}", Fore.RED)
+                        last_error = f"Error {response.status_code}: {response.text}"
+                        continue
+                        
+                except Exception as e:
+                    self._log(f"⚠️ Request error on {model}: {str(e)}", Fore.YELLOW)
+                    last_error = str(e)
+                    time.sleep(1)
+                    continue
+        
+        
+        return f"Error: All Groq models failed. Last error: {last_error}"
+
+    def _call_ai(
         self,
         prompt: str,
         temperature: float = 0.7,
         max_tokens: int = 8192
     ) -> str:
-        """Call Gemini API with automatic retry"""
-        if self.api_key_manager:
-            def api_call(api_key: str) -> str:
-                response = requests.post(
-                    f"{GEMINI_API_URL}?key={api_key}",
-                    headers={"Content-Type": "application/json"},
-                    json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {
-                            "temperature": temperature,
-                            "topK": 40,
-                            "topP": 0.95,
-                            "maxOutputTokens": max_tokens,
-                        }
-                    },
-                    timeout=60
-                )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                if "candidates" in data and len(data["candidates"]) > 0:
-                    return data["candidates"][0]["content"]["parts"][0]["text"]
-                else:
-                    return "Error: No response generated from Gemini"
+        """
+        Unified Provider Pool: Prioritizes Groq models (per user request) 
+        and only uses Gemini as a last resort.
+        """
+        last_error = "No providers available"
+        
+        # --- PHASE 1: GROQ POOL (Primary) ---
+        if self.groq_api_key:
+            self._log("🧪 Attempting Groq Pool (Primary)...", Fore.CYAN)
+            groq_response = self._call_groq(prompt, temperature, min(max_tokens, 4096))
             
-            return call_gemini_with_retry(
-                api_call,
-                self.api_key_manager,
-                verbose=self.verbose,
-                max_retries=2
-            )
-        else:
-            try:
-                response = requests.post(
-                    f"{GEMINI_API_URL}?key={self.gemini_api_key}",
-                    headers={"Content-Type": "application/json"},
-                    json={
-                        "contents": [{"parts": [{"text": prompt}]}],
-                        "generationConfig": {
-                            "temperature": temperature,
-                            "topK": 40,
-                            "topP": 0.95,
-                            "maxOutputTokens": max_tokens,
-                        }
-                    },
-                    timeout=60
-                )
-                
-                response.raise_for_status()
-                data = response.json()
-                
-                if "candidates" in data and len(data["candidates"]) > 0:
-                    return data["candidates"][0]["content"]["parts"][0]["text"]
-                else:
-                    return "Error: No response generated from Gemini"
-                
-            except Exception as e:
-                self._log(f"❌ Gemini API error: {str(e)}", Fore.RED)
-                return f"Error: {str(e)}"
-    
-    def _chunk_content(self, content: str, max_size: int) -> List[str]:
-        """Split large content into manageable chunks"""
-        if len(content) <= max_size:
-            return [content]
-        
-        chunks = []
-        
-        # Try to split by paragraphs first
-        paragraphs = content.split('\n\n')
-        current_chunk = ""
-        
-        for para in paragraphs:
-            if len(current_chunk) + len(para) + 2 <= max_size:
-                current_chunk += para + "\n\n"
+            # If Groq actually returned a result (didn't return an error string)
+            if not groq_response.startswith("Error:"):
+                return groq_response
             else:
-                if current_chunk:
-                    chunks.append(current_chunk.strip())
-                current_chunk = para + "\n\n"
-        
-        if current_chunk:
-            chunks.append(current_chunk.strip())
-        
-        # If chunks are still too large, split by sentences
-        final_chunks = []
-        for chunk in chunks:
-            if len(chunk) <= max_size:
-                final_chunks.append(chunk)
-            else:
-                # Force split at max_size
-                for i in range(0, len(chunk), max_size):
-                    final_chunks.append(chunk[i:i + max_size])
-        
-        return final_chunks
-    
-    def _analyze_content(self, content: str) -> Dict[str, Any]:
-        """Analyze content to determine optimal flashcard strategy"""
-        self._log("\n🔍 Step 1: Analyzing content...", Fore.CYAN)
-        
-        # Use first chunk for analysis if content is large
-        sample = content[:MAX_CONTENT_SIZE] if len(content) > MAX_CONTENT_SIZE else content
-        self._log(f"  Analyzing sample: {len(sample)} characters", Fore.BLUE)
-        
-        analysis_prompt = f"""Analyze this content sample and provide a JSON response with:
-1. content_type: "textbook", "lecture_notes", "research_paper", "article", etc.
-2. complexity_level: "beginner", "intermediate", "advanced"
-3. key_topics: List of 3-7 main topics covered
-4. estimated_concepts: Approximate number of key concepts
-5. recommended_card_count: Optimal number of flashcards (10-100)
-6. difficulty_distribution: {{"easy": 30, "medium": 50, "hard": 20}}
-7. recommended_card_types: ["qa", "definition", "cloze"]
+                last_error = groq_response
 
-Content sample (first ~200KB):
-{sample}
+        # --- PHASE 2: GEMINI POOL (Last Resort) ---
+        if self.api_key_manager or getattr(self, 'gemini_api_key', None):
+            self._log("🧪 Falling back to Gemini Pool (Last Resort)...", Fore.CYAN)
+            
+            # Prepare Gemini Models to try
+            gemini_models = ["gemini-2.0-flash", "gemini-1.5-flash"]
+            
+            # Get list of keys to cycle
+            keys = self.api_key_manager.get_key_list() if self.api_key_manager else [self.gemini_api_key]
+            
+            for model_name in gemini_models:
+                for idx, key in enumerate(keys):
+                    for attempt in range(2): # 2 attempts per key
+                        try:
+                            self._log(f"  Attempting {model_name} with Key #{idx+1} (try {attempt+1})...", Fore.BLUE)
+                            response = requests.post(
+                                f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={key}",
+                                headers={"Content-Type": "application/json"},
+                                json={
+                                    "contents": [{"parts": [{"text": prompt}]}],
+                                    "generationConfig": {
+                                        "temperature": temperature,
+                                        "topK": 40,
+                                        "topP": 0.95,
+                                        "maxOutputTokens": max_tokens,
+                                    }
+                                },
+                                timeout=60
+                            )
+                            
+                            if response.status_code == 200:
+                                data = response.json()
+                                if "candidates" in data and len(data["candidates"]) > 0:
+                                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                                else:
+                                    last_error = f"Gemini {model_name} returned no candidates"
+                            elif response.status_code == 429:
+                                wait_time = (attempt + 1) * 3
+                                self._log(f"  ⚠️ Rate limit (429) on Gemini {model_name}. Waiting {wait_time}s...", Fore.YELLOW)
+                                time.sleep(wait_time)
+                            else:
+                                last_error = f"Gemini {response.status_code}: {response.text}"
+                                
+                        except Exception as e:
+                            self._log(f"  ⚠️ Gemini exception: {str(e)}", Fore.YELLOW)
+                            last_error = str(e)
+                            time.sleep(1)
+                
+        return f"Error: All providers in the Unified Pool exhausted. Last error: {last_error}"
 
-IMPORTANT: Respond with ONLY valid JSON. No explanations, no markdown. Just the JSON object."""
+    def generate_bulk(
+        self,
+        content: str,
+        topic: str,
+        num_cards: int = 15,
+        difficulty: str = "medium"
+    ) -> List[Flashcard]:
+        """Generate flashcards in a single bulk request to avoid rate limits."""
+        self._log(f"🚀 Generating {num_cards} flashcards in bulk for: {topic}", Fore.CYAN)
         
-        response = self._call_gemini(analysis_prompt, temperature=0.3)
+        prompt = f"""Generate {num_cards} high-quality flashcards for the SPECIFIC topic: "{topic}"
+        
+        CRITICAL REQUIREMENT: Every single flashcard MUST be directly related to "{topic}". 
+        Avoid broad generalities about the subject (e.g. if the topic is "{topic}", do not generate basic cards about general functions unless they specifically illustrate a property of {topic}).
+        
+        Context from study material:
+        {content[:100000]}
+        
+        Target Difficulty: {difficulty}
+        
+        Instructions:
+        1. Mix of Q&A, definitions, and application problems.
+        2. Ensure cards are detailed, technical, and study-optimized.
+        3. If the context doesn't contain enough information for {num_cards} cards on "{topic}", use your internal expertise as a tutor to fulfill the request for this SPECIFIC topic.
+        4. **Use LaTeX math syntax** (e.g., $x^2$ or $\\frac{{a}}{{b}}$) for any mathematical formulas or scientific notation.
+        5. Respond ONLY with a valid JSON array of objects.
+        
+        Format:
+        [
+          {{
+            "front": "Specific question or term",
+            "back": "Detailed answer with context and examples",
+            "explanation": "Brief explanation of why this matters",
+            "type": "qa" or "definition",
+            "difficulty": "easy", "medium", or "hard",
+            "tags": ["topic1", "topic2"]
+          }}
+        ]
+        """
         
         try:
+            response = self._call_ai(prompt, temperature=0.7)
             response = self._clean_json_response(response)
-            analysis = json.loads(response)
             
-            self._log(f"✓ Content Type: {analysis.get('content_type', 'unknown')}", Fore.GREEN)
-            self._log(f"✓ Complexity: {analysis.get('complexity_level', 'unknown')}", Fore.GREEN)
-            self._log(f"✓ Key Topics: {len(analysis.get('key_topics', []))}", Fore.GREEN)
-            self._log(f"✓ Recommended Cards: {analysis.get('recommended_card_count', 0)}", Fore.GREEN)
+            raw_cards = json.loads(response)
+            flashcards = []
             
-            return analysis
-        except json.JSONDecodeError as e:
-            self._log(f"⚠️ JSON parsing error: {e}", Fore.YELLOW)
-            self._log(f"  Response preview: {response[:200]}...", Fore.YELLOW)
-            
-            # Return safe defaults
-            return {
-                'content_type': 'textbook',
-                'complexity_level': 'intermediate',
-                'key_topics': ['Chapter Content'],
-                'estimated_concepts': 40,
-                'recommended_card_count': 40,
-                'difficulty_distribution': {'easy': 30, 'medium': 50, 'hard': 20},
-                'recommended_card_types': ['qa', 'definition']
-            }
-    
-    def _extract_concepts_from_chunk(
-        self,
-        chunk: str,
-        chunk_index: int,
-        total_chunks: int,
-        cards_per_chunk: int
-    ) -> List[Dict]:
-        """Extract concepts from a single chunk"""
-        self._log(f"  Processing chunk {chunk_index + 1}/{total_chunks} ({len(chunk)} chars)", Fore.BLUE)
-        
-        extraction_prompt = f"""Extract exactly {cards_per_chunk} key concepts from this content for flashcard generation.
-
-Content:
-{chunk}
-
-For each concept, provide a JSON object with:
-- concept: The main concept/term
-- definition: Brief definition
-- importance: "high", "medium", "low"
-- suggested_card_type: "qa", "definition", or "cloze"
-- suggested_difficulty: "easy", "medium", or "hard"
-
-IMPORTANT: 
-1. Return ONLY a JSON array of concepts
-2. No markdown formatting, no code blocks
-3. Ensure all strings are properly quoted
-4. Each concept object must be complete
-
-Example format:
-[
-  {{"concept": "Term 1", "definition": "Def 1", "importance": "high", "suggested_card_type": "definition", "suggested_difficulty": "easy"}},
-  {{"concept": "Term 2", "definition": "Def 2", "importance": "medium", "suggested_card_type": "qa", "suggested_difficulty": "medium"}}
-]"""
-        
-        for attempt in range(3):  # Try up to 3 times
-            try:
-                response = self._call_gemini(extraction_prompt, temperature=0.5, max_tokens=8192)
-                response = self._clean_json_response(response)
-                
-                concepts = json.loads(response)
-                
-                # Handle nested structure
-                if isinstance(concepts, dict) and 'concepts' in concepts:
-                    concepts = concepts['concepts']
-                
-                if not isinstance(concepts, list):
-                    raise ValueError("Response is not a list")
-                
-                # Validate concepts
-                valid_concepts = []
-                for c in concepts:
-                    if isinstance(c, dict) and 'concept' in c and 'definition' in c:
-                        valid_concepts.append(c)
-                
-                if valid_concepts:
-                    self._log(f"    ✓ Extracted {len(valid_concepts)} concepts", Fore.GREEN)
-                    return valid_concepts
-                
-            except (json.JSONDecodeError, ValueError) as e:
-                self._log(f"    ⚠️ Attempt {attempt + 1} failed: {str(e)[:100]}", Fore.YELLOW)
-                if attempt < 2:
-                    time.sleep(1)  # Brief pause before retry
-                continue
-        
-        self._log(f"    ❌ Failed to extract concepts from chunk {chunk_index + 1}", Fore.RED)
-        return []
-    
-    def _extract_concepts(self, content: str, analysis: Dict) -> List[Dict]:
-        """Extract key concepts from content with chunking support"""
-        self._log("\n📚 Step 2: Extracting key concepts...", Fore.CYAN)
-        
-        recommended_count = analysis.get('recommended_card_count', 40)
-        
-        # Split content into chunks if too large
-        chunks = self._chunk_content(content, MAX_EXTRACTION_SIZE)
-        self._log(f"  Split into {len(chunks)} chunks for processing", Fore.BLUE)
-        
-        # Calculate cards per chunk
-        cards_per_chunk = max(5, recommended_count // len(chunks))
-        
-        all_concepts = []
-        
-        for i, chunk in enumerate(chunks):
-            chunk_concepts = self._extract_concepts_from_chunk(
-                chunk, i, len(chunks), cards_per_chunk
-            )
-            all_concepts.extend(chunk_concepts)
-            
-            # Limit to recommended count
-            if len(all_concepts) >= recommended_count:
-                all_concepts = all_concepts[:recommended_count]
-                break
-        
-        self._log(f"✓ Total extracted: {len(all_concepts)} concepts", Fore.GREEN)
-        return all_concepts
-    
-    def _generate_flashcards_from_concepts(
-        self,
-        concepts: List[Dict],
-        analysis: Dict,
-        difficulty_preference: str = "mixed"
-    ) -> List[Flashcard]:
-        """Generate flashcards from extracted concepts"""
-        self._log("\n🎴 Step 3: Generating flashcards...", Fore.CYAN)
-        
-        flashcards = []
-        
-        # Determine difficulty distribution
-        if difficulty_preference == "mixed":
-            dist = analysis.get('difficulty_distribution', {'easy': 30, 'medium': 50, 'hard': 20})
-        else:
-            dist = {difficulty_preference: 100}
-        
-        for i, concept in enumerate(concepts, 1):
-            # Determine difficulty
-            if i <= len(concepts) * (dist.get('easy', 30) / 100):
-                difficulty = 'easy'
-            elif i <= len(concepts) * ((dist.get('easy', 30) + dist.get('medium', 50)) / 100):
-                difficulty = 'medium'
-            else:
-                difficulty = 'hard'
-            
-            if 'suggested_difficulty' in concept:
-                difficulty = concept['suggested_difficulty']
-            
-            card_type = concept.get('suggested_card_type', 'qa')
-            
-            card_prompt = f"""Generate a {difficulty} difficulty {card_type} flashcard:
-
-Concept: {concept.get('concept', '')}
-Definition: {concept.get('definition', '')}
-
-Return JSON:
-{{"front": "question or term", "back": "answer or definition", "explanation": "why this matters", "tags": ["tag1", "tag2"]}}
-
-IMPORTANT: Return ONLY the JSON object, no markdown, no extra text."""
-            
-            for attempt in range(2):
-                try:
-                    response = self._call_gemini(card_prompt, temperature=0.7)
-                    response = self._clean_json_response(response)
-                    card_data = json.loads(response)
-                    
-                    flashcard = Flashcard(
-                        front=card_data.get('front', '')[:500],  # Limit length
+            for card_data in raw_cards:
+                if isinstance(card_data, dict) and 'front' in card_data and 'back' in card_data:
+                    flashcards.append(Flashcard(
+                        front=card_data.get('front', '')[:500],
                         back=card_data.get('back', '')[:1000],
-                        card_type=card_type,
-                        difficulty=difficulty,
+                        card_type=card_data.get('type', 'qa'),
+                        difficulty=card_data.get('difficulty', difficulty),
                         explanation=card_data.get('explanation', '')[:500],
-                        tags=card_data.get('tags', [concept.get('concept', 'General')])[:5],
-                        confidence_score=0.85
-                    )
-                    
-                    # Validate minimum content
-                    if len(flashcard.front) >= 10 and len(flashcard.back) >= 10:
-                        flashcards.append(flashcard)
-                        break
-                    
-                except (json.JSONDecodeError, Exception) as e:
-                    if attempt == 0:
-                        time.sleep(0.5)
-                    continue
+                        tags=card_data.get('tags', [topic])[:5]
+                    ))
             
-            if (i % 10 == 0) or (i == len(concepts)):
-                self._log(f"  Generated {len(flashcards)}/{i} cards...", Fore.BLUE)
-        
-        self._log(f"✓ Successfully generated {len(flashcards)} flashcards", Fore.GREEN)
-        return flashcards
-    
+            return flashcards
+        except Exception as e:
+            self._log(f"❌ Bulk generation failed: {e}", Fore.RED)
+            return []
+
     def _quality_check(self, flashcards: List[Flashcard]) -> List[Flashcard]:
-        """Quality check and filtering"""
-        self._log("\n✅ Step 4: Quality checking flashcards...", Fore.CYAN)
-        
+        """Quality check and filtering for bulk generated cards."""
         valid_cards = []
         seen_fronts = set()
         
         for card in flashcards:
-            # Check basic validity
-            if not card.front or not card.back:
-                continue
+            if not card.front or not card.back: continue
+            if len(card.front) < 5 or len(card.back) < 5: continue
             
-            # Check minimum length
-            if len(card.front) < 10 or len(card.back) < 10:
-                continue
-            
-            # Check for duplicates (case-insensitive)
             front_lower = card.front.lower().strip()
-            if front_lower in seen_fronts:
-                continue
+            if front_lower in seen_fronts: continue
             
             seen_fronts.add(front_lower)
             valid_cards.append(card)
         
-        removed = len(flashcards) - len(valid_cards)
-        if removed > 0:
-            self._log(f"⚠️ Removed {removed} invalid/duplicate cards", Fore.YELLOW)
-        
-        self._log(f"✓ {len(valid_cards)} valid cards remaining", Fore.GREEN)
         return valid_cards
-    
+
     def generate(
         self,
         content: str,
@@ -564,36 +444,28 @@ IMPORTANT: Return ONLY the JSON object, no markdown, no extra text."""
         card_count: Literal["auto", "few", "normal", "many"] = "auto",
         custom_count: Optional[int] = None
     ) -> FlashcardSet:
-        """Generate flashcards with large content support"""
+        """Generate flashcards using the bulk approach for stability."""
         self._log(f"\n{'='*80}", Fore.CYAN)
-        self._log(f"🎴 Generating Flashcards: {title}", Fore.CYAN)
+        self._log(f"🎴 Generating Flashcards (Bulk Mode): {title}", Fore.CYAN)
         self._log(f"  Content size: {len(content):,} characters", Fore.CYAN)
         self._log(f"{'='*80}", Fore.CYAN)
         
         start_time = time.time()
         
-        # Step 1: Analyze content
-        analysis = self._analyze_content(content)
-        
-        # Adjust count
+        # Determine card count
         if custom_count:
-            analysis['recommended_card_count'] = custom_count
+            num_cards = custom_count
         elif card_count == "few":
-            analysis['recommended_card_count'] = max(10, analysis['recommended_card_count'] // 2)
+            num_cards = 10
         elif card_count == "many":
-            analysis['recommended_card_count'] = min(100, analysis['recommended_card_count'] * 2)
+            num_cards = 30
+        else:
+            num_cards = 15 # Healthy default for bulk
+            
+        # Bulk generation (Avoids multiple RPM hits)
+        flashcards = self.generate_bulk(content, title, num_cards, difficulty if difficulty != "mixed" else "medium")
         
-        # Step 2: Extract concepts
-        concepts = self._extract_concepts(content, analysis)
-        
-        if not concepts:
-            self._log("❌ No concepts extracted", Fore.RED)
-            return FlashcardSet(title=title, cards=[], metadata={'error': 'No concepts found'})
-        
-        # Step 3: Generate flashcards
-        flashcards = self._generate_flashcards_from_concepts(concepts, analysis, difficulty)
-        
-        # Step 4: Quality check
+        # Quality check
         flashcards = self._quality_check(flashcards)
         
         elapsed_time = time.time() - start_time
@@ -602,20 +474,9 @@ IMPORTANT: Return ONLY the JSON object, no markdown, no extra text."""
             title=title,
             cards=flashcards,
             metadata={
-                'content_analysis': analysis,
                 'content_size': len(content),
-                'chunks_processed': len(self._chunk_content(content, MAX_EXTRACTION_SIZE)),
                 'total_cards': len(flashcards),
-                'difficulty_counts': {
-                    'easy': len([c for c in flashcards if c.difficulty == 'easy']),
-                    'medium': len([c for c in flashcards if c.difficulty == 'medium']),
-                    'hard': len([c for c in flashcards if c.difficulty == 'hard'])
-                },
-                'card_type_counts': {
-                    'qa': len([c for c in flashcards if c.card_type == 'qa']),
-                    'definition': len([c for c in flashcards if c.card_type == 'definition']),
-                    'cloze': len([c for c in flashcards if c.card_type == 'cloze'])
-                },
+                'mode': 'bulk_optimized',
                 'processing_time_seconds': elapsed_time
             }
         )

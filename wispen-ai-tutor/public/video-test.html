@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wispen Video Generator - Standalone Test</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Indie+Flower&display=swap"
+        rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 40px;
+            color: #1a1a1a;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: white;
+            padding: 40px;
+            border-radius: 32px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.05);
+            text-align: center;
+        }
+
+        h1 {
+            font-family: 'Indie Flower', cursive;
+            font-size: 3rem;
+            margin-bottom: 30px;
+            color: #4834d4;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 40px;
+            justify-content: center;
+        }
+
+        input {
+            padding: 15px 25px;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            width: 400px;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            border-color: #6c63ff;
+        }
+
+        button {
+            padding: 15px 30px;
+            background: #6c63ff;
+            color: white;
+            border: none;
+            border-radius: 16px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.3s;
+        }
+
+        button:hover {
+            background: #5a52d4;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        #canvasContainer {
+            margin-top: 20px;
+            background: #f8fafc;
+            padding: 40px;
+            border-radius: 24px;
+            display: none;
+        }
+
+        canvas {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            max-width: 100%;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-weight: 600;
+            color: #666;
+        }
+
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        #progressBar {
+            width: 100%;
+            height: 6px;
+            background: #eee;
+            border-radius: 3px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #progressFill {
+            height: 100%;
+            background: #6c63ff;
+            width: 0%;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>🎥 Standalone Video Test</h1>
+        <p>Test the video generation logic in an isolated environment. This calls the backend port directly.</p>
+
+        <div class="input-group">
+            <input type="text" id="topic" placeholder="Describe a process (e.g. Photosynthesis)..."
+                value="Photosynthesis">
+            <button id="generateBtn" onclick="generateVideo()">Generate Test Animation</button>
+        </div>
+
+        <div id="status">Ready.</div>
+
+        <div id="canvasContainer">
+            <div id="progressBar">
+                <div id="progressFill"></div>
+            </div>
+            <canvas id="videoCanvas" width="640" height="360"></canvas>
+            <div class="controls">
+                <button id="playPauseBtn" onclick="togglePlay()">Pause</button>
+                <span id="timer">0s / 0s</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentVideo = null;
+        let currentTime = 0;
+        let isPlaying = false;
+        let animationFrameId = null;
+        let startTime = 0;
+        let activeStepIndex = -1;
+        let audioObj = null;
+        let imageCache = {};
+
+        const canvas = document.getElementById('videoCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusDiv = document.getElementById('status');
+        const generateBtn = document.getElementById('generateBtn');
+
+        async function generateVideo() {
+            const topic = document.getElementById('topic').value;
+            if (!topic) return;
+
+            statusDiv.innerText = "Generating animation... (this may take 10-20 seconds)";
+            generateBtn.disabled = true;
+            document.getElementById('canvasContainer').style.display = 'none';
+
+            try {
+                // Determine backend URL (assuming it's on 5000 or the same origin but port 5000)
+                const backendUrl = window.location.hostname === 'localhost' ? 'http://localhost:5000' : '';
+                const response = await fetch(`${backendUrl}/videos/test_generate`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ topic })
+                });
+
+                if (!response.ok) throw new Error("Backend error: " + response.status);
+
+                const data = await response.json();
+                console.log("Scene received:", data);
+
+                startPlayback(data);
+                statusDiv.innerText = "Generation complete!";
+            } catch (err) {
+                console.error(err);
+                statusDiv.innerText = "Error: " + err.message;
+            } finally {
+                generateBtn.disabled = false;
+            }
+        }
+
+        function startPlayback(video) {
+            currentVideo = video;
+            currentTime = 0;
+            isPlaying = true;
+            startTime = performance.now();
+            document.getElementById('canvasContainer').style.display = 'block';
+            document.getElementById('playPauseBtn').innerText = "Pause";
+
+            if (animationFrameId) cancelAnimationFrame(animationFrameId);
+            animate(performance.now());
+        }
+
+        function togglePlay() {
+            isPlaying = !isPlaying;
+            document.getElementById('playPauseBtn').innerText = isPlaying ? "Pause" : "Play";
+            if (isPlaying) {
+                startTime = performance.now() - currentTime;
+                animate(performance.now());
+            }
+        }
+
+        function animate(time) {
+            if (!isPlaying) return;
+
+            const videoData = currentVideo; // Renamed for clarity with new render function
+            if (!videoData) return;
+
+            const elapsed = time - startTime;
+            const loopTime = elapsed % videoData.duration;
+            currentTime = loopTime;
+
+            // --- Ken Burns Effect ---
+            ctx.save();
+            const zoomSpeed = 0.05;
+            const panSpeed = 10;
+            const phase = (loopTime % 20000) / 20000;
+            const scale = 1 + (Math.sin(phase * Math.PI) * zoomSpeed);
+            const tx = Math.cos(phase * Math.PI * 2) * panSpeed;
+            const ty = Math.sin(phase * Math.PI * 2) * panSpeed;
+            ctx.translate(canvas.width / 2 + tx, canvas.height / 2 + ty);
+            ctx.scale(scale, scale);
+            ctx.translate(-canvas.width / 2, -canvas.height / 2);
+
+            // Clear & BG
+            ctx.fillStyle = videoData.background || '#ffffff';
+            ctx.fillRect(-20, -20, canvas.width + 40, canvas.height + 40);
+
+            // Audio Sync
+            const stepIndex = videoData.steps.findIndex(s => loopTime >= s.start && loopTime <= s.end);
+            if (stepIndex !== activeStepIndex) {
+                activeStepIndex = stepIndex;
+                if (audioObj) audioObj.pause(); // Stop previous audio
+                if (stepIndex !== -1 && videoData.steps[stepIndex].audioUrl) {
+                    const audioUrl = videoData.steps[stepIndex].audioUrl;
+                    const finalAudioUrl = audioUrl.startsWith('http') ? audioUrl : `http://localhost:5000/static${audioUrl}`;
+                    audioObj = new Audio(finalAudioUrl);
+                    if (isPlaying) audioObj.play().catch(e => console.warn("Audio play blocked", e));
+                }
+            }
+
+            // UI Progress
+            document.getElementById('progressFill').style.width = (loopTime / videoData.duration * 100) + '%';
+            document.getElementById('timer').innerText = Math.floor(loopTime / 1000) + 's / ' + Math.floor(videoData.duration / 1000) + 's';
+
+            const currentStep = videoData.steps[stepIndex];
+            if (currentStep) {
+                // Transition (Fade)
+                const stepDur = currentStep.end - currentStep.start;
+                const stepProg = (loopTime - currentStep.start) / stepDur;
+                ctx.globalAlpha = stepProg < 0.1 ? stepProg * 10 : (stepProg > 0.9 ? (1 - stepProg) * 10 : 1);
+
+                currentStep.layers.forEach(layer => {
+                    ctx.save();
+                    if (layer.type === 'text') {
+                        ctx.fillStyle = layer.color || '#0f172a';
+                        ctx.font = layer.font || 'bold 24px Outfit, sans-serif';
+                        ctx.textAlign = 'center';
+                        ctx.fillText(layer.content || '', layer.x, layer.y);
+                    } else if (layer.type === 'diagram') {
+                        ctx.fillStyle = layer.color || '#3b82f6';
+                        ctx.strokeStyle = layer.color || '#3b82f6';
+                        ctx.lineWidth = 2;
+                        if (layer.shape === 'circle') {
+                            ctx.beginPath(); ctx.arc(layer.x, layer.y, layer.r || 10, 0, Math.PI * 2); ctx.fill();
+                            if (layer.label) { ctx.fillStyle = 'white'; ctx.font = 'bold 12px Outfit'; ctx.fillText(layer.label, layer.x, layer.y + 4); }
+                        } else if (layer.shape === 'rect') {
+                            ctx.fillRect(layer.x - (layer.r || 10), layer.y - (layer.r || 10), (layer.r || 10) * 2, (layer.r || 10) * 2);
+                            if (layer.label) { ctx.fillStyle = 'white'; ctx.font = 'bold 12px Outfit'; ctx.fillText(layer.label, layer.x, layer.y + 4); }
+                        } else if (layer.shape === 'arrow') {
+                            const angle = Math.atan2((layer.targetY || layer.y) - layer.y, (layer.targetX || layer.x) - layer.x);
+                            ctx.beginPath(); ctx.moveTo(layer.x, layer.y); ctx.lineTo(layer.targetX || layer.x, layer.targetY || layer.y); ctx.stroke();
+                        }
+                    } else if (layer.type === 'particles') {
+                        const pPhase = (loopTime % 2000) / 2000;
+                        ctx.fillStyle = layer.color || '#f59e0b';
+                        for (let i = 0; i < (layer.count || 5); i++) {
+                            const pp = (pPhase + (i / (layer.count || 5))) % 1;
+                            const px = (layer.source?.x || 0) + ((layer.target?.x || 0) - (layer.source?.x || 0)) * pp;
+                            const py = (layer.source?.y || 0) + ((layer.target?.y || 0) - (layer.source?.y || 0)) * pp;
+                            ctx.beginPath(); ctx.arc(px, py, 2.5, 0, Math.PI * 2); ctx.fill();
+                        }
+                    } else if (layer.type === 'image') {
+                        const url = layer.url;
+                        if (url) {
+                            const finalUrl = url.startsWith('http') ? url : `http://localhost:5000/static${url}`;
+                            if (!imageCache[finalUrl]) {
+                                imageCache[finalUrl] = new Image();
+                                imageCache[finalUrl].src = finalUrl;
+                            }
+                            if (imageCache[finalUrl].complete) {
+                                const w = layer.width || 500;
+                                const h = layer.height || 300;
+                                ctx.globalAlpha *= (layer.opacity || 1);
+                                ctx.drawImage(imageCache[finalUrl], (canvas.width - w) / 2, (canvas.height - h) / 2, w, h);
+                            }
+                        }
+                    }
+                    ctx.restore();
+                });
+            }
+            ctx.restore();
+            animationFrameId = requestAnimationFrame(animate);
+        }
+    </script>
+</body>
+
+</html>

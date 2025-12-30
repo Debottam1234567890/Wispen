@@ -1,0 +1,795 @@
+/* Dashboard Theme Variables */
+:root {
+    --dash-bg: #FAF9F6;
+    --dash-card-bg: #ffffff;
+    --dash-text-primary: #333333;
+    --dash-text-secondary: #666666;
+
+    /* Subjects */
+    --subject-math: #87CEEB;
+    --subject-science: #98D8C8;
+    --subject-english: #FFD4A3;
+    --subject-history: #E6D5F5;
+    --subject-coding: #a0c4ff;
+    --subject-art: #ffadad;
+
+    /* Status Indicators */
+    --status-test: #ff6b6b;
+    --status-homework: #ffd93d;
+    --status-project: #4ecdc4;
+    --status-complete: #6bff6b;
+
+    /* Session Colors */
+    --session-bg: #fff0f5;
+    --session-accent: #ff6b6b;
+}
+
+.dashboard-container {
+    width: 100vw;
+    height: 100vh;
+    background: var(--dash-bg);
+    position: relative;
+    display: flex;
+    font-family: 'Indie Flower', cursive;
+    overflow: hidden;
+    z-index: 1;
+}
+
+/* Pseudo-element for Background Image with Opacity & Animation */
+.dashboard-container::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background-image: url('/bg-pattern.png');
+    background-size: 400px;
+    opacity: 0.15;
+    /* Focus on calendar */
+    z-index: -1;
+    animation: pan-background 40s linear infinite;
+    /* Faster than 60s to be visible */
+    pointer-events: none;
+}
+
+@keyframes pan-background {
+    0% {
+        transform: translate(0, 0);
+    }
+
+    100% {
+        transform: translate(-100px, -100px);
+    }
+}
+
+/* --- Layout --- */
+.dashboard-main {
+    flex: 7;
+    padding: 2rem;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    z-index: 2;
+}
+
+.dashboard-content {
+    background: rgba(255, 255, 255, 0.4);
+    backdrop-filter: blur(8px);
+    border-radius: 24px;
+    padding: 20px;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.dashboard-sidebar {
+    flex: 3;
+    min-width: 350px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: -5px 0 20px rgba(0, 0, 0, 0.05);
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    overflow-y: hidden;
+    /* Main sidebar doesn't scroll, inner container does if needed, or we rely on flex */
+    z-index: 10;
+    height: 100vh;
+    position: relative;
+}
+
+/* Scrollable area for tasks/history */
+.sidebar-scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-bottom: 20px;
+}
+
+/* Ensure flex items shrinking doesn't hide content unexpectedly */
+.sidebar-section {
+    flex-shrink: 0;
+}
+
+/* --- Tabs --- */
+.dashboard-tabs {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.tab-btn {
+    background: transparent;
+    border: none;
+    font-size: 1.5rem;
+    font-family: inherit;
+    font-weight: bold;
+    color: #ccc;
+    cursor: pointer;
+    padding-bottom: 5px;
+    position: relative;
+    transition: color 0.3s;
+}
+
+.tab-btn.active {
+    color: var(--dash-text-primary);
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--dream-pink);
+    border-radius: 2px;
+}
+
+/* --- Journal View --- */
+.journal-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding-bottom: 50px;
+}
+
+.journal-day {
+    background: white;
+    padding: 20px;
+    border-radius: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.03);
+    position: relative;
+    overflow: hidden;
+}
+
+.journal-day::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 6px;
+    background: #cbd5e1;
+    /* Default line color */
+}
+
+/* Specific colors for journal entries based on mood/load? or random */
+.journal-day:nth-child(2n) .journal-content {
+    color: #555;
+}
+
+.journal-date-header {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--dream-pink);
+    margin-bottom: 10px;
+    border-bottom: 2px dashed #eee;
+    padding-bottom: 5px;
+}
+
+.journal-entry-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.journal-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1rem;
+    color: #444;
+}
+
+.journal-check {
+    color: var(--status-complete);
+    font-weight: bold;
+    font-size: 1.2rem;
+}
+
+/* --- Student Diary Redesign --- */
+.diary-viewport {
+    perspective: 2000px;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.diary-book {
+    width: 90%;
+    max-width: 800px;
+    height: 90%;
+    max-height: 600px;
+    position: relative;
+    transform-style: preserve-3d;
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Cover Styling */
+.diary-cover-front {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: #5d4037;
+    /* Leather Brown */
+    background-image:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.05) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, 0.05) 50%, rgba(255, 255, 255, 0.05) 75%, transparent 75%, transparent),
+        radial-gradient(circle at 50% 50%, #795548, #3e2723);
+    border-radius: 10px 20px 20px 10px;
+    box-shadow:
+        inset 5px 0 10px rgba(0, 0, 0, 0.5),
+        /* Spine shadow */
+        10px 10px 30px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    backface-visibility: hidden;
+    transform-origin: left;
+    z-index: 10;
+    cursor: pointer;
+    border: 3px solid #3e2723;
+}
+
+.diary-title-card {
+    border: 4px dashed #ffd700;
+    padding: 30px;
+    background: #1a1a1a;
+    color: #ffd700;
+    font-family: 'Indie Flower', cursive;
+    text-align: center;
+    transform: rotate(-2deg);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+/* Internal Page Styling (Lined Paper) */
+.diary-paper {
+    background: #fdfbf7;
+    background-image:
+        linear-gradient(#e1e1e1 1px, transparent 1px),
+        /* Horizontal lines */
+        linear-gradient(90deg, #ff9a9e 1px, transparent 1px);
+    /* Vertical red margin */
+    background-size: 100% 30px, 40px 100%;
+    /* Line height 30px, Margin width 40px */
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    border-radius: 5px 15px 15px 5px;
+    box-shadow: inset 10px 0 20px rgba(0, 0, 0, 0.1);
+    padding: 30px 40px 30px 60px;
+    /* Left padding creates margin space */
+    font-family: 'Indie Flower', cursive;
+    font-size: 1.2rem;
+    line-height: 30px;
+    /* Matches background size */
+    color: #333;
+    overflow-y: auto;
+    backface-visibility: hidden;
+    transform-origin: left;
+}
+
+/* Spiral Binding Effect */
+.diary-binding {
+    position: absolute;
+    left: -15px;
+    top: 20px;
+    bottom: 20px;
+    width: 30px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    z-index: 20;
+}
+
+.binding-ring {
+    width: 100%;
+    height: 10px;
+    background: linear-gradient(90deg, #ccc, #888, #ccc);
+    border-radius: 5px;
+    transform: rotate(-10deg);
+}
+
+/* Page Navigation */
+.diary-nav-btn {
+    position: absolute;
+    bottom: 20px;
+    width: 40px;
+    height: 40px;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: background 0.2s;
+    z-index: 100;
+}
+
+.diary-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+.diary-nav-prev {
+    left: 20px;
+}
+
+.diary-nav-next {
+    right: 20px;
+}
+
+/* --- Session Manager --- */
+.session-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    flex-shrink: 0;
+    /* Prevent collapsing */
+}
+
+.session-btn {
+    width: 100%;
+    padding: 15px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    color: white;
+    font-family: inherit;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(251, 194, 235, 0.4);
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.session-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(251, 194, 235, 0.6);
+}
+
+.prev-session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 1px dashed #eee;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+.prev-session-item:last-child {
+    border-bottom: none;
+}
+
+.previous-sessions {
+    margin-top: 10px;
+    min-height: 50px;
+}
+
+/* --- Calendar Header --- */
+.calendar-header-controls {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.nav-btn {
+    background: white;
+    border: 2px solid #eee;
+    padding: 10px 15px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: all 0.2s;
+}
+
+.nav-btn:hover {
+    background: var(--dash-bg);
+    transform: scale(1.1);
+}
+
+/* --- Calendar Monthly Grid --- */
+.calendar-month-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 10px;
+    height: 100%;
+}
+
+.weekday-header {
+    text-align: center;
+    font-weight: bold;
+    color: var(--dash-text-secondary);
+    padding-bottom: 10px;
+}
+
+.calendar-cell {
+    background: white;
+    border-radius: 12px;
+    min-height: 120px;
+    padding: 10px;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    overflow: hidden;
+}
+
+.calendar-cell:hover {
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.05);
+}
+
+/* Load indicators */
+.calendar-cell.load-high {
+    background-color: rgba(255, 99, 71, 0.05);
+}
+
+.calendar-cell.load-low {
+    background-color: rgba(144, 238, 144, 0.05);
+}
+
+.calendar-cell.load-med {
+    background-color: white;
+}
+
+
+.calendar-cell.date-selectable {
+    cursor: crosshair;
+    border: 2px dashed var(--dream-pink);
+    background: #fff0f5;
+}
+
+.calendar-cell.date-selectable:hover {
+    background: #ffe4e1;
+    transform: scale(1.02);
+}
+
+.calendar-cell.today {
+    border: 2px solid var(--dream-pink);
+}
+
+.cell-date-num {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #444;
+    margin-bottom: 5px;
+}
+
+.cell-date-num.pale {
+    opacity: 0.3;
+}
+
+/* --- Event Items --- */
+.event-item {
+    font-size: 0.85rem;
+    padding: 2px 6px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.event-item:hover {
+    z-index: 10;
+}
+
+/* 1. Tests: Imperfect Red Circle */
+.event-test {
+    background: transparent;
+    color: red;
+    border: 2px solid red;
+    /* Irregular border radius for hand-drawn circle look */
+    border-radius: 255px 15px 225px 15px / 15px 225px 15px 255px;
+    text-align: center;
+    transform: rotate(-2deg);
+    font-weight: bold;
+    box-shadow: 2px 2px 0px rgba(255, 0, 0, 0.1);
+}
+
+.event-test:hover {
+    transform: rotate(0deg) scale(1.1);
+}
+
+/* 2. Homework: Sticky Note */
+.event-homework {
+    background: #fffcd1;
+    /* Sticky note yellow */
+    color: #555;
+    border-radius: 2px;
+    border-left: 3px solid #f6e05e;
+    box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    transform: rotate(1deg);
+}
+
+.event-homework:hover {
+    transform: rotate(0deg) scale(1.05);
+}
+
+/* 3. Project: Highlighter */
+.event-project {
+    background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+    color: white;
+    border-radius: 15px 4px 15px 4px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transform: rotate(-1deg);
+    font-weight: bold;
+}
+
+.event-project:hover {
+    transform: rotate(0deg) scale(1.05);
+}
+
+/* --- Event Hover Popup ("Stylized Window") aligned to Calendar --- */
+.calendar-hover-popup {
+    position: absolute;
+    background: white;
+    border: 2px solid var(--dream-pink);
+    border-radius: 16px;
+    padding: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    width: 200px;
+    pointer-events: none;
+    /* Let clicks pass through if needed, but usually we want to see it */
+    animation: pop-up 0.2s ease-out;
+}
+
+@keyframes pop-up {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* --- Animations --- */
+.flip-enter {
+    transform: rotateY(90deg);
+    opacity: 0;
+}
+
+.flip-enter-active {
+    transform: rotateY(0);
+    opacity: 1;
+    transition: all 0.5s ease-out;
+}
+
+.flip-exit {
+    transform: rotateY(0);
+    opacity: 1;
+}
+
+.flip-exit-active {
+    transform: rotateY(-90deg);
+    opacity: 0;
+    transition: all 0.5s ease-in;
+}
+
+/* --- Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(4px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+}
+
+.add-modal {
+    background: white;
+    padding: 2rem;
+    border-radius: 24px;
+    width: 400px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    animation: pop-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    margin-bottom: 20px;
+    color: var(--dash-text-primary);
+}
+
+.modal-input {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #eee;
+    border-radius: 12px;
+    font-family: inherit;
+    font-size: 1rem;
+    margin-bottom: 15px;
+    outline: none;
+}
+
+.modal-input:focus {
+    border-color: var(--dream-pink);
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-primary {
+    flex: 1;
+    background: var(--dream-pink);
+    color: white;
+    border: none;
+    padding: 12px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+.btn-secondary {
+    flex: 1;
+    background: #f0f0f0;
+    color: #666;
+    border: none;
+    padding: 12px;
+    border-radius: 30px;
+    font-family: inherit;
+    font-size: 1.1rem;
+    cursor: pointer;
+}
+
+/* --- Quick Add Creative BG (Sticky Footer) --- */
+.quick-add-container {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    position: sticky;
+    /* Make it stick! */
+    bottom: 0;
+    z-index: 20;
+    box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.05);
+    /* Separator shadow */
+    overflow: hidden;
+    /* Innovative light background pattern: math symbols */
+    background-image:
+        radial-gradient(#e0e0e0 1px, transparent 1px),
+        url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1h2v2H1V1zm4 0h2v2H5V1zm-4 4h2v2H1V5zm4 0h2v2H5V5z' fill='%23f0f0f0' fill-opacity='0.4'/%3E%3C/svg%3E");
+    background-size: 20px 20px, 40px 40px;
+}
+
+.quick-add-btn {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 12px;
+    border: none;
+    font-family: inherit;
+    font-weight: bold;
+    color: white;
+    cursor: pointer;
+    transition: transform 0.1s;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+/* --- Sidebar Task Items --- */
+.sidebar-section {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.streak-card {
+    background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+    color: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.task-card {
+    background: white;
+    padding: 10px 15px;
+    border-radius: 12px;
+    border-left: 5px solid #ccc;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.03);
+    position: relative;
+    transition: transform 0.2s;
+}
+
+.task-card:hover {
+    transform: translateX(5px);
+}
+
+.task-card.completed {
+    opacity: 0.6;
+    text-decoration: line-through;
+}
+
+/* Hover Description Window */
+.task-hover-desc {
+    position: absolute;
+    top: 50%;
+    right: 105%;
+    /* Move to LEFT of the card (since it's in right sidebar) */
+    transform: translateY(-50%);
+    width: 250px;
+    max-height: 200px;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid var(--dream-pink);
+    border-radius: 12px;
+    padding: 15px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+    z-index: 100;
+    /* Ensure high z-index */
+    font-size: 0.9rem;
+    color: #555;
+    /* Animation */
+    animation: fade-in-right 0.2s ease-out;
+}
+
+/* Custom Scrollbar for hover desc */
+.task-hover-desc::-webkit-scrollbar {
+    width: 4px;
+}
+
+.task-hover-desc::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 2px;
+}
+
+@keyframes fade-in-right {
+    from {
+        opacity: 0;
+        transform: translate(10px, -50%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(0, -50%);
+    }
+}

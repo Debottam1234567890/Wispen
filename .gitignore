@@ -1,0 +1,67 @@
+# Secrets & Keys (NEVER COMMIT THESE)
+.env
+.env.local
+*.json
+!package.json
+!tsconfig.json
+!manifest.json
+!vercel.json
+!cors.json
+# Keep your specific knowledge base files if they are part of the source
+!mindmap.json
+# But exclude service account keys (wildcard appropriately if possible, or list specific)
+*firebase-adminsdk*.json
+*service_account*.json
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv
+venv/
+env/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Node / Javascript
+node_modules/
+dist/
+dist-ssr/
+coverage/
+
+# Generated Content (Multimedia & Artifacts)
+generated/
+output_*/
+frames/
+*.mp4
+*.mp3
+*.wav
+*.avi
+*.mov
+# Exclude root-level images that look like test outputs
+# But keep assets that might be in specific dirs. 
+# It is safer to exclude by pattern or specific generated file names seen.
+# Based on your screenshots:
+backend_test_*.png
+test_stability_*.png
+failing_image.png
+mindmap_dot.*
+test_result.mp3
+test_tts*.mp3
+photosynthesis_*.mp4
+Screenshot*.png
+
+# Backend Uploads
+backend/uploads/
+
+.idea/
+.vscode/
+*.swp

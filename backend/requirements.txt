@@ -1,0 +1,7 @@
+flask
+firebase-admin
+flask-cors
+python-dotenv
+
+opensearch-py
+mutagen

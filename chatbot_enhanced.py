@@ -1,4 +1,5 @@
 import os
+import io
 import json
 import requests
 from datetime import datetime
@@ -7,12 +8,217 @@ from urllib.parse import quote, urlparse
 from pathlib import Path
 import base64
 import mimetypes
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Generator
 import hashlib
 from collections import defaultdict
 import re
 import uuid
 from web_search_client import WebSearchClient
+import asyncio
+try:
+    import edge_tts
+    EDGE_TTS_AVAILABLE = True
+except ImportError:
+    EDGE_TTS_AVAILABLE = False
+    print("⚠️  edge_tts not installed. Run: pip install edge-tts")
+
+import threading # Added for background extraction
+
+class BookshelfRAG:
+    """
+    RAG engine for user's bookshelf items.
+    """
+    
+    # Simple static dicts for caching
+    _text_cache = {}
+    _extraction_status = {} # item_id -> 'running' | 'completed' | 'failed'
+
+    @staticmethod
+    def extract_text(file_bytes: bytes, file_type: str, start_page: int = 0, max_pages: int = None) -> str:
+        """Extract text from file bytes with pagination."""
+        try:
+            if file_type == 'pdf' or file_type == 'application/pdf':
+                if not DOCUMENT_PROCESSING_AVAILABLE:
+                    return "[PDF processing not available]"
+                
+                try:
+                    reader = PyPDF2.PdfReader(io.BytesIO(file_bytes))
+                    total_pages = len(reader.pages)
+                    text = ""
+                    
+                    end_page = total_pages
+                    if max_pages:
+                        end_page = min(start_page + max_pages, total_pages)
+                    
+                    print(f"DEBUG: Extracting PDF pages {start_page} to {end_page} (Total: {total_pages})")
+                    
+                    for i in range(start_page, end_page):
+                        page = reader.pages[i]
+                        extracted = page.extract_text()
+                        if extracted:
+                            text += extracted + "\n"
+                        # No print needed for background usually, unless verbose
+                            
+                    return text
+                except Exception as pdf_err:
+                    print(f"PDF Error: {pdf_err}")
+                    return ""
+                
+            else:
+                # Text files don't support pagination easily in this simple impl
+                # Just return full text
+                try:
+                    return file_bytes.decode('utf-8')
+                except UnicodeDecodeError:
+                    return file_bytes.decode('latin-1', errors='ignore')
+                
+        except Exception as e:
+            print(f"Extraction Error: {e}")
+            return ""
+
+    @staticmethod
+    def _background_extract_worker(item_id: str, file_bytes: bytes, file_type: str, start_page: int):
+        """Worker to extract remaining pages in background."""
+        print(f"DEBUG: Starting background extraction for {item_id} from page {start_page}")
+        try:
+            # Extract EVERYTHING remaining
+            remaining_text = BookshelfRAG.extract_text(file_bytes, file_type, start_page=start_page)
+            
+            # Update cache safely
+            if item_id in BookshelfRAG._text_cache:
+                BookshelfRAG._text_cache[item_id] += "\n" + remaining_text
+            else:
+                BookshelfRAG._text_cache[item_id] = remaining_text
+                
+            BookshelfRAG._extraction_status[item_id] = 'completed'
+            print(f"DEBUG: Background extraction completed for {item_id}. Total cache size: {len(BookshelfRAG._text_cache[item_id])} chars")
+            
+        except Exception as e:
+            print(f"DEBUG: Background extraction failed: {e}")
+            BookshelfRAG._extraction_status[item_id] = 'failed'
+
+    @staticmethod
+    def search(bookshelf_items: List[Dict], query: str, top_k: int = 20, user_id: str = None, opensearch_client=None) -> List[Dict]:
+        """
+        Search bookshelf items for relevant chunks.
+        Uses OpenSearch if available, falls back to legacy/simple text matching.
+        """
+        print(f"DEBUG: RAG Search called with query: '{query}'")
+        
+        # 1. Try OpenSearch First
+        # Use injected client (preferred) or global fallback
+        client = opensearch_client if opensearch_client else ws_manager
+        
+        if OPENSEARCH_AVAILABLE and client and user_id:
+            try:
+                print(f"DEBUG: Delegating to OpenSearch for user {user_id}")
+                results = client.search(query, user_id, top_k=top_k)
+                
+                # Return OpenSearch results directly
+                # No more fragile chapter detection
+                if results:
+                    return results
+                else:
+                    print("DEBUG: OpenSearch returned no results, falling back to legacy.")
+            except Exception as e:
+                print(f"OpenSearch Search Error: {e}")
+
+        # Fallback to legacy logic if OpenSearch fails or returned nothing (e.g. not indexed yet)
+        if not query or not bookshelf_items:
+            return []
+
+        # Remove the previous incomplete block if it exists
+        
+        # ... (Legacy logic below)
+
+
+        query_terms = set(query.lower().split())
+        relevant_chunks = []
+        
+        chunk_size = 800
+        overlap = 150
+
+        for item in bookshelf_items:
+            item_id = item.get('id') or item.get('storageUrl')
+            if not item_id: continue
+
+            # Check Status
+            status = BookshelfRAG._extraction_status.get(item_id)
+            
+            # Check Text Cache
+            text = BookshelfRAG._text_cache.get(item_id, "")
+            
+            # Hybrid Extraction Logic
+            if not text and status != 'running':
+                # Need to download and start process
+                print(f"DEBUG: No text for {item.get('title')}, starting Hybrid Extraction...")
+                
+                file_bytes = None
+                # Download logic (reused)
+                if item.get('content'):
+                     try: file_bytes = base64.b64decode(item['content'])
+                     except: pass
+                elif item.get('storageUrl'):
+                    try:
+                        resp = requests.get(item['storageUrl'], timeout=10)
+                        if resp.status_code == 200: file_bytes = resp.content
+                    except: pass
+                
+                if file_bytes:
+                    # 1. Immediate Extraction (First 50 pages)
+                    initial_limit = 50
+                    initial_text = BookshelfRAG.extract_text(file_bytes, item.get('fileType', ''), max_pages=initial_limit)
+                    
+                    # Update Cache immediately
+                    BookshelfRAG._text_cache[item_id] = initial_text
+                    text = initial_text # Use this for current search
+                    
+                    # 2. Background Extraction (Rest of book)
+                    # Only for PDF basically
+                    file_type = item.get('fileType', item.get('type', ''))
+                    if 'pdf' in file_type.lower() or 'pdf' in str(item.get('title')).lower():
+                        BookshelfRAG._extraction_status[item_id] = 'running'
+                        thread = threading.Thread(
+                            target=BookshelfRAG._background_extract_worker,
+                            args=(item_id, file_bytes, file_type, initial_limit)
+                        )
+                        thread.daemon = True
+                        thread.start()
+            
+            # Determine if we should warn user about partial results
+            # access global status inside loop?
+            
+            if not text:
+                continue
+
+            # Search Logic (Standard)
+            for i in range(0, len(text), chunk_size - overlap):
+                chunk = text[i:i + chunk_size]
+                if len(chunk) < 50: continue
+                
+                score = 0
+                chunk_lower = chunk.lower()
+                for term in query_terms:
+                    if term in chunk_lower: score += 1
+                
+                if score > 0:
+                    note = ""
+                    if BookshelfRAG._extraction_status.get(item_id) == 'running':
+                        note = " [Note: Still reading rest of book...]"
+                        
+                    relevant_chunks.append({
+                        'score': score,
+                        'content': chunk + note,
+                        'source': item.get('title', 'Unknown Source'),
+                        'page': 'N/A'
+                    })
+        
+        print(f"DEBUG: Found {len(relevant_chunks)} relevant chunks before sorting.")
+
+        # Sort by score desc
+        relevant_chunks.sort(key=lambda x: x['score'], reverse=True)
+        return relevant_chunks[:top_k]
+
 
 try:
     from processer_for_upload import (
@@ -23,6 +229,20 @@ try:
 except ImportError:
     RAG_PROCESSOR_AVAILABLE = False
     print("⚠️  RAG processor not available. Run: pip install sentence-transformers tavily-python")
+
+# Try to import OpenSearch Manager
+try:
+    from backend.opensearch_client import ws_manager
+    OPENSEARCH_AVAILABLE = True
+except ImportError:
+    # If running from root, maybe it's just opensearch_client if path messed up, 
+    # but likely backend.opensearch_client
+    try:
+        from opensearch_client import ws_manager
+        OPENSEARCH_AVAILABLE = True
+    except:
+        OPENSEARCH_AVAILABLE = False
+        print("⚠️  OpenSearch client not available.")
 
 # Firebase Admin SDK
 try:
@@ -45,13 +265,350 @@ except ImportError:
 
 # Configuration
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-FIREBASE_CREDENTIALS_PATH = "/Users/sandeep/VSCODE/LearnBot/ai-tutor-9fb7e-firebase-adminsdk-fbsvc-1bceca572e.json"
+FIREBASE_CREDENTIALS_PATH = "/Users/sandeep/VSCODE/LearnBot/wispen-f4a94-firebase-adminsdk-fbsvc-f1e0e701d7.json"
 STABLE_DIFFUSION_API_KEY = os.getenv("STABLE_DIFFUSION_API_KEY", "")
 STABLE_DIFFUSION_API_URL = "https://api.stability.ai/v1/generate/ultra"
 TAVILY_API_KEY = os.getenv("TAVILY_API_KEY", "")
 
+# Groq Configuration
+GROQ_API_KEY = os.getenv("GROQ_API_KEY", "")
+GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
+
+MURF_API_KEY = os.getenv("MURF_API_KEY", "")
+
+class GeminiChat:
+    """Gemini Chat Integration (Google Generative AI)"""
+    
+    @staticmethod
+    def chat(user_message: str, history: List[Dict] = [], model: str = "gemini-2.0-flash") -> str:
+        """
+        Send a message to Gemini API.
+        """
+        if not GEMINI_API_KEY:
+            return "Error: No Gemini API key configured. Please set GEMINI_API_KEY in .env"
+
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={GEMINI_API_KEY}"
+        
+        # Prepare contents
+        contents = []
+        
+        # Add conversation history
+        for msg in history[-15:]:
+            role = msg.get("role", "user")
+            if role == "ai": role = "model"
+            elif role == "assistant": role = "model"
+            contents.append({"role": role, "parts": [{"text": msg.get("content", "")}]})
+            
+        contents.append({"role": "user", "parts": [{"text": user_message}]})
+        
+        try:
+            response = requests.post(
+                url,
+                headers={"Content-Type": "application/json"},
+                json={
+                    "contents": contents,
+                    "generationConfig": {
+                        "temperature": 0.7,
+                        "maxOutputTokens": 4096,
+                    }
+                },
+                timeout=60
+            )
+
+            if response.status_code == 200:
+                data = response.json()
+                if "candidates" in data and len(data["candidates"]) > 0:
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                return "Gemini returned no response."
+            else:
+                print(f"Gemini API Error {response.status_code}: {response.text}")
+                return f"Gemini API Error: {response.status_code}"
+
+        except Exception as e:
+            print(f"Gemini Request Error: {e}")
+            return f"Gemini Request Error: {str(e)}"
+
+
+
+class GroqChat:
+    """Groq Chat Integration (Llama 3)"""
+    
+    @staticmethod
+    def chat(user_message: str, history: List[Dict] = [], model: Optional[str] = None, json_mode: bool = False) -> str:
+        """
+        Send a message to Groq with fallback to smaller model on rate limit.
+        """
+        if not GROQ_API_KEY:
+            return "Error: No Groq API key configured. Please set GROQ_API_KEY in .env"
+
+        models_to_try = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-8b-instant",
+            "llama-3.2-1b-preview",
+            "llama-3.2-3b-preview",
+            "mixtral-8x7b-32768",
+            "gemma2-9b-it"
+        ]
+
+        system_instruction = GroqChat._get_system_instruction()
+        
+        # Prepare messages
+        messages = [{"role": "system", "content": system_instruction}]
+        
+        # Add conversation history (Limit to last 15 to save tokens)
+        for msg in history[-15:]:
+            role = msg.get("role", "user")
+            if role == "ai": role = "assistant"
+            messages.append({"role": role, "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": user_message})
+        
+        models_list = models_to_try
+        if model:
+            models_list = [model] + [m for m in models_to_try if m != model]
+
+        for current_model in models_list:
+            for attempt in range(2): # Double attempt per model
+                try:
+                    # print(f"{Colors.CYAN}🤖 Sending to Groq ({current_model}, try {attempt+1})...{Colors.END}")
+                    payload = {
+                        "model": current_model,
+                        "messages": messages,
+                        "temperature": 0.7,
+                        "max_tokens": 1024
+                    }
+                    if json_mode:
+                        payload["response_format"] = {"type": "json_object"}
+
+                    response = requests.post(
+                        GROQ_API_URL,
+                        headers={
+                            "Authorization": f"Bearer {GROQ_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json=payload,
+                        timeout=30
+                    )
+
+                    if response.status_code == 200:
+                        data = response.json()
+                        if "choices" in data and len(data["choices"]) > 0:
+                            return data["choices"][0]["message"]["content"]
+                    elif response.status_code == 429:
+                        wait = (attempt + 1) * 4
+                        print(f"{Colors.YELLOW}⚠️ Groq Rate Limit (429) on {current_model}. Waiting {wait}s...{Colors.END}")
+                        time.sleep(wait)
+                        continue # Retry same model or move on
+                    
+                    # If other error, print and return
+                    if response.status_code != 200:
+                         print(f"Error {response.status_code}: {response.text}")
+                         break # Move to next model
+
+                except Exception as e:
+                    print(f"{Colors.YELLOW}⚠️ Request error on {model}: {e}{Colors.END}")
+                    time.sleep(1)
+                    continue
+
+        return "I'm sorry, I'm currently experiencing high traffic. Please try again in a moment."
+
+    @staticmethod
+    def chat_stream(user_message: str, history: List[Dict] = []) -> Generator[str, None, None]:
+        """
+        Stream message from Groq with fallback to smaller model on rate limit.
+        """
+        if not GROQ_API_KEY:
+            yield "Error: No Groq API key configured."
+            return
+
+        models_to_try = [
+            "llama-3.3-70b-versatile",
+            "llama-3.1-70b-versatile",
+            "mixtral-8x7b-32768",
+            "llama-3.1-8b-instant",
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "gemma-7b-it"
+        ]
+
+        system_instruction = GroqChat._get_system_instruction()
+        
+        # Prepare messages
+        messages = [{"role": "system", "content": system_instruction}]
+        
+        # Add conversation history (Limit to last 15 to save tokens)
+        for msg in history[-15:]:
+            role = msg.get("role", "user")
+            if role == "ai": role = "assistant"
+            messages.append({"role": role, "content": msg.get("content", "")})
+        messages.append({"role": "user", "content": user_message})
+
+        # Retry logic with backoff
+        import time
+        import random
+
+        for attempt in range(3): # Try up to 3 times total sequence
+            for current_model in models_to_try:
+                try:
+                    response = requests.post(
+                        GROQ_API_URL,
+                        headers={
+                            "Authorization": f"Bearer {GROQ_API_KEY}",
+                            "Content-Type": "application/json"
+                        },
+                        json={
+                            "model": current_model,
+                            "messages": messages,
+                            "temperature": 0.7,
+                            "max_tokens": 1024,
+                            "stream": True
+                        },
+                        timeout=30,
+                        stream=True
+                    )
+
+                    if response.status_code == 200:
+                        success = False
+                        for line in response.iter_lines():
+                            if line:
+                                line = line.decode('utf-8')
+                                if line.startswith('data: '):
+                                    json_str = line[6:]
+                                    if json_str.strip() == '[DONE]':
+                                        break
+                                    try:
+                                        chunk = json.loads(json_str)
+                                        if "choices" in chunk and len(chunk["choices"]) > 0:
+                                            delta = chunk["choices"][0].get("delta", {})
+                                            content = delta.get("content", "")
+                                            if content:
+                                                success = True
+                                                yield content
+                                    except json.JSONDecodeError:
+                                        pass
+                        if success:
+                            return # Successfully streamed, exit function
+                    
+                    elif response.status_code == 429:
+                        print(f"{Colors.YELLOW}⚠️ Groq Rate Limit (429) on {current_model}. Switching...{Colors.END}")
+                        continue # Try next model immediately
+                    elif response.status_code == 503:
+                        print(f"{Colors.YELLOW}⚠️ Groq Service Unavailable (503). Retrying...{Colors.END}")
+                        time.sleep(1 + random.random()) # Short backoff
+                        continue
+                    else:
+                        print(f"{Colors.RED}❌ Groq Error {response.status_code}: {response.text}{Colors.END}")
+                        # Don't yield error to user immediately, try next model/attempt
+                        continue
+
+                except Exception as e:
+                    print(f"{Colors.YELLOW}⚠️ Request error on {model}: {e}{Colors.END}")
+                    continue
+            
+            # If we exhausted models in this attempt, wait a bit before full retry?
+            # Or just give up? 
+            # Let's add a small sleep before retrying the whole model list again
+            time.sleep(2 + random.random())
+
+        # Final fallback if all attempts fail
+        yield "I'm having a little trouble connecting to my brain right now due to high traffic. Please try asking again in a few seconds!"
+
+    @staticmethod
+    def _get_system_instruction():
+        try:
+            kb_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'knowledge_base.txt')
+            with open(kb_path, 'r', encoding='utf-8') as f:
+                return f.read()
+        except:
+            return "You are Wispen, an advanced AI tutor."
+
+
+    @staticmethod
+    def generate_speech(text: str) -> Optional[bytes]:
+        """Generates speech using Groq API (PlayAI model) - NOTE: This requires terms acceptance."""
+        if not GROQ_API_KEY:
+            print(f"{Colors.RED}❌ No Groq API key for TTS{Colors.END}")
+            return None
+
+        url = "https://api.groq.com/openai/v1/audio/speech"
+        try:
+            response = requests.post(
+                url, 
+                headers={
+                    "Authorization": f"Bearer {GROQ_API_KEY}",
+                    "Content-Type": "application/json"
+                }, 
+                json={
+                    "model": "playai-tts", 
+                    "voice": "Fritz-PlayAI",
+                    "input": text,
+                    "response_format": "mp3"
+                }, 
+                timeout=30
+            )
+            
+            if response.status_code == 200:
+                return response.content
+            else:
+                # print(f"{Colors.YELLOW}⚠️ Groq TTS failed ({response.status_code}): {response.text}{Colors.END}")
+                return None
+        except Exception as e:
+            print(f"{Colors.YELLOW}⚠️ Groq TTS error: {e}{Colors.END}")
+            return None
+
+
+
 IMAGES_FOLDER = os.path.join(Path.home(), "LearnBot", "images")
+class MurfTTS:
+    """Murf.ai Text-to-Speech Integration"""
+    
+    @staticmethod
+    def generate_speech(text: str) -> Optional[bytes]:
+        """Generates speech using Murf.ai API"""
+        url = "https://api.murf.ai/v1/speech/generate"
+        
+        if not MURF_API_KEY:
+            print(f"{Colors.RED}❌ No Murf API key found{Colors.END}")
+            # Try fallback to Groq? No, user explicitly requested Murf.
+            return None
+
+        headers = {
+            "api-key": MURF_API_KEY,
+            "Content-Type": "application/json",
+            "Accept": "application/json"
+        }
+        
+        data = {
+            "voiceId": "en-US-ryan", # Male, standard
+            # "voiceId": "en-US-natalie", # Female, standard (alternative)
+            "text": text,
+            "format": "MP3",
+            "channelType": "MONO",
+            "encodeAsBase64": True
+        }
+        
+        try:
+            # print(f"Generate speech with Murf: {text[:20]}...")
+            response = requests.post(url, headers=headers, json=data, timeout=30)
+            
+            if response.status_code == 200:
+                json_data = response.json()
+                encoded_audio = json_data.get("encodedAudio")
+                
+                if encoded_audio:
+                    return base64.b64decode(encoded_audio)
+                elif "audioFile" in json_data:
+                    # Fallback if base64 not returned (shouldn't happen with flag)
+                    audio_url = json_data["audioFile"]
+                    file_resp = requests.get(audio_url)
+                    return file_resp.content
+            else:
+                print(f"{Colors.YELLOW}⚠️ Murf TTS failed ({response.status_code}): {response.text}{Colors.END}")
+                return None
+                
+        except Exception as e:
+            print(f"{Colors.RED}❌ Murf TTS error: {e}{Colors.END}")
+            return None
+
 os.makedirs(IMAGES_FOLDER, exist_ok=True)
 
 # Colors for CLI
@@ -66,6 +623,116 @@ class Colors:
     BOLD = '\033[1m'
     UNDERLINE = '\033[4m'
     MAGENTA = '\033[95m'
+
+class EdgeTTS:
+    """Edge TTS Integration (Microsoft Edge Voice) - Free & High Quality"""
+    
+    @staticmethod
+    def generate_speech(text: str, voice: str = "en-US-ChristopherNeural") -> Optional[bytes]:
+        """Generates speech using edge-tts (async wrapper)"""
+        if not EDGE_TTS_AVAILABLE:
+            print(f"{Colors.RED}❌ EdgeTTS not available. Install it with: pip install edge-tts{Colors.END}")
+            return None
+
+        async def _run_tts():
+            communicate = edge_tts.Communicate(text, voice)
+            audio_data = b""
+            async for chunk in communicate.stream():
+                if chunk["type"] == "audio":
+                    audio_data += chunk["data"]
+            return audio_data
+            
+        try:
+            # Use asyncio.run to execute the async function
+            return asyncio.run(_run_tts())
+        except Exception as e:
+            print(f"{Colors.RED}❌ EdgeTTS error: {e}{Colors.END}")
+            return None
+
+    @staticmethod
+    def generate_speech_stream(text: str) -> Generator[bytes, None, None]:
+        """Generates speech stream using edge-tts (sync wrapper for generator)"""
+        if not EDGE_TTS_AVAILABLE:
+            yield b""
+            return
+
+        voice = "en-US-ChristopherNeural" 
+        
+        # We need a way to bridge async stream to sync generator for Flask
+        # This is tricky with asyncio.run. 
+        # Simpler approach: gather larger chunks or use a queue.
+        # But for simplicity and safety in Flask generic environment:
+        # We will just use the run implementation but yield chunks if possible?
+        # Actually, asyncio generators are async.
+        # We might need to run the loop in a separate thread or use a bridge.
+        
+        # Alternative: Just run it and buffer? No, that defeats the purpose.
+        # Let's keep it simple: The user wants "chatgpt speed". 
+        # EdgeTTS is fast. The bottleneck is likely just the full generation wait.
+        
+        # Let's try to run a loop that pushes to a queue.
+        import queue
+        import threading
+        
+        q = queue.Queue()
+        
+        def _producer():
+            async def _async_gen():
+                communicate = edge_tts.Communicate(text, voice)
+                async for chunk in communicate.stream():
+                    if chunk["type"] == "audio":
+                        q.put(chunk["data"])
+                q.put(None) # Signal done
+
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                loop.run_until_complete(_async_gen())
+                loop.close()
+            except Exception as e:
+                print(f"TTS Stream Error: {e}")
+                q.put(None)
+
+        t = threading.Thread(target=_producer)
+        t.start()
+        
+        while True:
+            chunk = q.get()
+            if chunk is None:
+                break
+            yield chunk
+
+class ImageGenerator:
+    """AI Image Generation Integration"""
+    
+    @staticmethod
+    def generate_image(prompt: str, filename: str, output_dir: str) -> Optional[str]:
+        """
+        Generates an AI image from a prompt using Pollinations.
+        Returns the saved filename or None on failure.
+        """
+        if not os.path.exists(output_dir):
+            os.makedirs(output_dir, exist_ok=True)
+            
+        try:
+            # Clean prompt for URL
+            safe_prompt = quote(prompt)
+            url = f"https://image.pollinations.ai/prompt/{safe_prompt}?width=800&height=450&nologo=true&seed={int(time.time())}"
+            
+            response = requests.get(url, timeout=30)
+            if response.status_code == 200:
+                filepath = os.path.join(output_dir, filename)
+                with open(filepath, "wb") as f:
+                    f.write(response.content)
+                return filename
+            else:
+                print(f"Image API error: {response.status_code}")
+        except Exception as e:
+            print(f"Image generation failed: {e}")
+            
+        return None
+
+
 
 def research(query: str, max_results: int = 5):
     """Perform AI-synthesized web research with Tavily API"""
@@ -2032,24 +2699,13 @@ Format as a structured list with:
 
 Focus on their strengths, address weaknesses, and suggest next steps in their learning journey."""
 
-            response = requests.post(
-                f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-                headers={"Content-Type": "application/json"},
-                json={
-                    "contents": [{"parts": [{"text": prompt}]}],
-                    "generationConfig": {
-                        "temperature": 0.7,
-                        "maxOutputTokens": 2048,
-                    }
-                },
-                timeout=60
-            )
-
-            if response.status_code == 200:
-                data = response.json()
-                if "candidates" in data and len(data["candidates"]) > 0:
-                    recommendations = data["candidates"][0]["content"]["parts"][0]["text"]
-                    return recommendations
+            # Use HuggingFaceChat instead of Gemini
+            recommendations = HuggingFaceChat.chat(prompt)
+            if recommendations and not recommendations.startswith("Error:"):
+                return recommendations
+            else:
+                print(f"{Colors.YELLOW}⚠️ AI recommendations failed: {recommendations}{Colors.END}")
+                return self._generate_fallback_recommendations()
 
         except Exception as e:
             print(f"{Colors.YELLOW}⚠️ Could not generate AI recommendations: {str(e)}{Colors.END}")

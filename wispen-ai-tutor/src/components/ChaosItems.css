@@ -1,0 +1,79 @@
+/* Chaos Items Container */
+.chaos-zone {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 40vh;
+    /* Top 40% of screen */
+    pointer-events: none;
+    z-index: 2;
+    /* Behind main content but visible */
+    overflow: hidden;
+}
+
+/* Common Chaos Item Styles */
+.chaos-item {
+    position: absolute;
+    cursor: pointer;
+    pointer-events: auto;
+    transition: transform 0.3s ease;
+    filter: drop-shadow(2px 2px 3px rgba(0, 0, 0, 0.2));
+}
+
+.chaos-item:hover {
+    transform: scale(1.1) rotate(5deg) !important;
+    z-index: 100;
+}
+
+/* Paper Ball */
+.paper-ball {
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle at 30% 30%, #f0f0f0, #d0d0d0);
+    border-radius: 50%;
+    border: 1px solid #bbb;
+    box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.1),
+        2px 5px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Torn Paper */
+.torn-paper {
+    background: #fdfdfd;
+    padding: 15px;
+    width: 180px;
+    font-family: 'Indie Flower', cursive;
+    font-size: 1rem;
+    color: #d32f2f;
+    /* Red/Angry color */
+    border: none;
+    /* Removed border */
+    /* Clip path for jagged edges */
+    clip-path: polygon(0% 0%, 100% 0%,
+            100% 90%, 95% 95%, 90% 90%, 85% 95%, 80% 90%, 75% 95%, 70% 90%, 65% 95%, 60% 90%, 55% 95%, 50% 90%, 45% 95%, 40% 90%, 35% 95%, 30% 90%, 25% 95%, 20% 90%, 15% 95%, 10% 90%, 5% 95%, 0% 90%);
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    transform: rotate(-5deg);
+}
+
+/* Scribbled Formula */
+.scribbled-formula {
+    position: relative;
+    font-family: 'Courier New', monospace;
+    font-weight: bold;
+    font-size: 1.4rem;
+    color: #333;
+    /* Removed white background box */
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.8);
+    padding: 5px 10px;
+}
+
+.scribble-overlay {
+    position: absolute;
+    top: 50%;
+    left: -10%;
+    width: 120%;
+    height: 20px;
+    transform: translateY(-50%) rotate(-2deg);
+    pointer-events: none;
+}

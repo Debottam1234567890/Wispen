@@ -1,0 +1,15 @@
+flask
+flask-cors
+firebase-admin
+python-dotenv
+requests
+edge-tts
+opensearch-py
+mutagen
+Pillow
+google-generativeai
+groq
+pypdf2
+beautifulsoup4
+yt-dlp
+moviepy

@@ -1,0 +1,121 @@
+.wispen-mascot-container {
+  position: relative;
+  width: 400px;
+  height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.constellation-halo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.wispen-mascot {
+  position: relative;
+  z-index: 2;
+  width: 280px;
+  height: 280px;
+  filter: drop-shadow(0 10px 30px rgba(125, 249, 255, 0.3));
+}
+
+.mascot-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(1.1);
+}
+
+.glasses-clickable {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 40px;
+  cursor: pointer;
+  z-index: 3;
+}
+
+.glasses-clickable:hover {
+  background: rgba(125, 249, 255, 0.1);
+  border-radius: 50%;
+}
+
+.falling-glasses {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 2rem;
+  z-index: 4;
+}
+
+.glowing-pen {
+  position: absolute;
+  bottom: 20%;
+  right: 15%;
+  z-index: 3;
+  filter: drop-shadow(0 0 10px var(--vapor-cyan));
+}
+
+.phantom-word {
+  position: absolute;
+  top: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-tagline);
+  font-size: 2.5rem;
+  color: var(--vapor-cyan);
+  text-shadow: 0 0 20px var(--vapor-cyan), 0 0 40px var(--vapor-cyan);
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Speech Bubble Styles */
+.speech-bubble {
+  position: absolute;
+  top: 0;
+  left: -120px;
+  width: 180px;
+  background: white;
+  border: 2px solid var(--ink-shadow);
+  border-radius: 20px;
+  padding: 15px;
+  z-index: 10;
+  box-shadow: 4px 4px 0 rgba(74, 74, 94, 0.2);
+  transform-origin: bottom right;
+}
+
+.bubble-text {
+  font-family: var(--font-ui);
+  color: var(--ink-shadow);
+  font-size: 1rem;
+  line-height: 1.3;
+  text-align: center;
+}
+
+.bubble-tail {
+  position: absolute;
+  bottom: -12px;
+  right: 20px;
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-right: 2px solid var(--ink-shadow);
+  border-bottom: 2px solid var(--ink-shadow);
+  transform: rotate(45deg);
+}
+
+@media (max-width: 768px) {
+  .speech-bubble {
+    left: -40px;
+    top: -60px;
+    width: 160px;
+  }
+}

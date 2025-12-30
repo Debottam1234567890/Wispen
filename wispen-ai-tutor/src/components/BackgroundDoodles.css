@@ -1,0 +1,43 @@
+.background-doodles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.floating-pencil {
+  position: absolute;
+  opacity: 0.5;
+}
+
+.geometric-shape {
+  position: absolute;
+  opacity: 0.4;
+}
+
+.geometric-shape.triangle {
+  top: 15%;
+  right: 20%;
+}
+
+.geometric-shape.spiral {
+  bottom: 20%;
+  left: 15%;
+}
+
+.background-scroll,
+.background-eraser,
+.shooting-pencil {
+  position: absolute;
+  opacity: 0.28;
+}
+
+.background-scroll svg,
+.background-eraser svg,
+.shooting-pencil svg {
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.12));
+}

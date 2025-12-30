@@ -1,0 +1,69 @@
+.signup-page {
+    display: flex;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg-paper);
+    font-family: var(--font-ui);
+}
+
+.signup-split-left {
+    flex: 0 0 55%;
+    background: #000;
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+}
+
+.video-overlay-text {
+    position: absolute;
+    bottom: 40px;
+    left: 40px;
+    color: white;
+    z-index: 10;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+}
+
+.video-overlay-text h2 {
+    font-family: var(--font-title);
+    font-size: 3rem;
+    margin-bottom: 10px;
+    color: var(--dream-pink);
+}
+
+.video-overlay-text p {
+    font-family: var(--font-tagline);
+    font-size: 1.5rem;
+    opacity: 0.9;
+}
+
+.signup-split-right {
+    flex: 1;
+    background: linear-gradient(135deg, #fff0f5 0%, #fff 100%);
+    padding: 40px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow-y: auto;
+}
+
+/* Animations */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.signup-step-container {
+    width: 100%;
+    max-width: 500px;
+    animation: fadeIn 0.5s ease-out;
+}
