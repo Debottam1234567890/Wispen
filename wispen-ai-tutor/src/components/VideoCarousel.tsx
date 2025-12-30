@@ -92,7 +92,7 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
                 });
 
             // Log video errors
-            videoRef.current.onerror = (e) => {
+            videoRef.current.onerror = () => {
                 console.error(`[VideoSlide] Video error for ${src}:`, videoRef.current?.error);
             };
         }
