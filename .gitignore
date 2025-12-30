@@ -4,6 +4,7 @@
 *.json
 !package.json
 !tsconfig.json
+!tsconfig.*.json
 !manifest.json
 !vercel.json
 !cors.json
