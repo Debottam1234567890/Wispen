@@ -18,34 +18,39 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
         const canvas = canvasRef.current;
         if (!video || !canvas) return;
 
+        console.log(`[VideoSlide] Mounting for src: ${src}`);
+
         const ctx = canvas.getContext('2d');
         if (!ctx) return;
 
         const render = () => {
             if (video && !video.paused && !video.ended) {
-                const vidW = video.videoWidth;
-                const vidH = video.videoHeight;
-                const canvasW = canvas.width;
-                const canvasH = canvas.height;
+                // Check if video has data
+                if (video.readyState >= 2) {
+                    const vidW = video.videoWidth;
+                    const vidH = video.videoHeight;
+                    const canvasW = canvas.width;
+                    const canvasH = canvas.height;
 
-                if (vidW > 0 && vidH > 0 && canvasW > 0 && canvasH > 0) {
-                    const vidRatio = vidW / vidH;
-                    const canvasRatio = canvasW / canvasH;
+                    if (vidW > 0 && vidH > 0 && canvasW > 0 && canvasH > 0) {
+                        const vidRatio = vidW / vidH;
+                        const canvasRatio = canvasW / canvasH;
 
-                    let drawWidth = canvasW;
-                    let drawHeight = canvasH;
-                    let offsetX = 0;
-                    let offsetY = 0;
+                        let drawWidth = canvasW;
+                        let drawHeight = canvasH;
+                        let offsetX = 0;
+                        let offsetY = 0;
 
-                    if (canvasRatio > vidRatio) {
-                        drawHeight = canvasW / vidRatio;
-                        offsetY = (canvasH - drawHeight) / 2;
-                    } else {
-                        drawWidth = canvasH * vidRatio;
-                        offsetX = (canvasW - drawWidth) / 2;
+                        if (canvasRatio > vidRatio) {
+                            drawHeight = canvasW / vidRatio;
+                            offsetY = (canvasH - drawHeight) / 2;
+                        } else {
+                            drawWidth = canvasH * vidRatio;
+                            offsetX = (canvasW - drawWidth) / 2;
+                        }
+
+                        ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
                     }
-
-                    ctx.drawImage(video, offsetX, offsetY, drawWidth, drawHeight);
                 }
             }
             animationFrameRef.current = requestAnimationFrame(render);
@@ -79,9 +84,17 @@ const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {
     // Ensure Play
     useEffect(() => {
         if (videoRef.current) {
-            videoRef.current.play().catch(() => {
-                // Silent catch for autoplay policies
-            });
+            console.log(`[VideoSlide] Attempting to play: ${src}`);
+            videoRef.current.play()
+                .then(() => console.log(`[VideoSlide] Playing: ${src}`))
+                .catch((e) => {
+                    console.error(`[VideoSlide] Playback failed for ${src}:`, e);
+                });
+
+            // Log video errors
+            videoRef.current.onerror = (e) => {
+                console.error(`[VideoSlide] Video error for ${src}:`, videoRef.current?.error);
+            };
         }
     }, [src]);
 
