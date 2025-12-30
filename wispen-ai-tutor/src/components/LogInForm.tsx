@@ -29,6 +29,8 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
                     const user = result.user;
                     const token = await user.getIdToken();
 
+                    console.log('Got Firebase ID Token, sending to backend...');
+
                     // Send token to backend
                     const response = await fetch(`${API_BASE_URL}/auth/google`, {
                         method: 'POST',
@@ -42,8 +44,10 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
                         setIsLoggedIn(true);
                         setUid(user.uid);
                     } else {
-                        console.error('Backend login failed');
-                        alert('Login validation failed.');
+                        // Extract error detail
+                        const errorData = await response.text();
+                        console.error('Backend login failed:', response.status, errorData);
+                        alert(`Login failed: Server responded with ${response.status}. Check console for details.`);
                     }
                     setIsLoading(false);
                 }
