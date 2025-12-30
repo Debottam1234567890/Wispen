@@ -1,122 +1,131 @@
-import { useState } from 'react';
-
+import { useState, useEffect } from 'react';
 import { signInWithRedirect, getRedirectResult, signInWithEmailAndPassword } from 'firebase/auth';
-import { useEffect } from 'react';
+import { auth, googleProvider } from '../firebase';
+import { API_BASE_URL } from '../config';
 
-// ... imports
+import LeafButton from './LeafButton';
 
-// Inside component
-useEffect(() => {
-    const checkRedirect = async () => {
-        try {
-            const result = await getRedirectResult(auth);
-            if (result) {
-                setIsLoading(true);
-                const user = result.user;
-                const token = await user.getIdToken();
+interface LogInFormProps {
+    onSwitchToSignUp: () => void;
+    onEnterFactory: (uid: string) => void;
+}
 
-                // Send token to backend
-                const response = await fetch(`${API_BASE_URL}/auth/google`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ idToken: token }),
-                });
+const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
+    const [formData, setFormData] = useState({
+        email: '',
+        password: ''
+    });
 
-                if (response.ok) {
-                    const data = await response.json();
-                    console.log('Backend login success:', data);
-                    setIsLoggedIn(true);
-                    setUid(user.uid);
-                } else {
-                    console.error('Backend login failed');
-                    alert('Login validation failed.');
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+    const [uid, setUid] = useState<string | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const checkRedirect = async () => {
+            try {
+                const result = await getRedirectResult(auth);
+                if (result) {
+                    setIsLoading(true);
+                    const user = result.user;
+                    const token = await user.getIdToken();
+
+                    // Send token to backend
+                    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken: token }),
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('Backend login success:', data);
+                        setIsLoggedIn(true);
+                        setUid(user.uid);
+                    } else {
+                        console.error('Backend login failed');
+                        alert('Login validation failed.');
+                    }
+                    setIsLoading(false);
                 }
+            } catch (error: any) {
+                console.error('Redirect Login Error:', error);
+                alert(error.message || 'Google Login failed.');
                 setIsLoading(false);
             }
+        };
+
+        checkRedirect();
+    }, []);
+
+    const handleGoogleLogin = async () => {
+        try {
+            setIsLoading(true);
+            await signInWithRedirect(auth, googleProvider);
         } catch (error: any) {
-            console.error('Redirect Login Error:', error);
-            alert(error.message || 'Google Login failed.');
+            console.error('Google Login Error:', error);
             setIsLoading(false);
         }
     };
 
-    checkRedirect();
-}, []);
+    return;
+}
 
-const handleGoogleLogin = async () => {
-    try {
-        setIsLoading(true);
-        await signInWithRedirect(auth, googleProvider);
-    } catch (error: any) {
-        console.error('Google Login Error:', error);
-        setIsLoading(false);
+try {
+    setIsLoading(true);
+
+    // Sign in with Firebase Authentication
+    const userCredential = await signInWithEmailAndPassword(
+        auth,
+        formData.email.trim(),
+        formData.password.trim()
+    );
+
+    const user = userCredential.user;
+    const token = await user.getIdToken();
+
+    // Verify token with backend
+    const response = await fetch(`${API_BASE_URL}/auth/google`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ idToken: token }),
+    });
+
+    if (response.ok) {
+        const data = await response.json();
+        console.log('Backend login success:', data);
+        setIsLoggedIn(true);
+        setUid(user.uid);
+    } else {
+        throw new Error('Backend authentication failed');
     }
-};
+} catch (error: any) {
+    console.error('Login Error:', error);
 
+    // User-friendly error messages
+    let errorMessage = 'Login failed. Please try again.';
 
-const handleLogin = async () => {
-    // Validate email and password are not empty
-    if (!formData.email.trim() || !formData.password.trim()) {
-        alert('Please enter both email and password.');
-        return;
+    if (error.code === 'auth/invalid-email') {
+        errorMessage = 'Invalid email address format.';
+    } else if (error.code === 'auth/user-disabled') {
+        errorMessage = 'This account has been disabled.';
+    } else if (error.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please sign up first.';
+    } else if (error.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+    } else if (error.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check and try again.';
+    } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = 'Too many failed login attempts. Please try again later.';
+    } else if (error.message) {
+        errorMessage = error.message;
     }
 
-    try {
-        setIsLoading(true);
-
-        // Sign in with Firebase Authentication
-        const userCredential = await signInWithEmailAndPassword(
-            auth,
-            formData.email.trim(),
-            formData.password.trim()
-        );
-
-        const user = userCredential.user;
-        const token = await user.getIdToken();
-
-        // Verify token with backend
-        const response = await fetch(`${API_BASE_URL}/auth/google`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ idToken: token }),
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            console.log('Backend login success:', data);
-            setIsLoggedIn(true);
-            setUid(user.uid);
-        } else {
-            throw new Error('Backend authentication failed');
-        }
-    } catch (error: any) {
-        console.error('Login Error:', error);
-
-        // User-friendly error messages
-        let errorMessage = 'Login failed. Please try again.';
-
-        if (error.code === 'auth/invalid-email') {
-            errorMessage = 'Invalid email address format.';
-        } else if (error.code === 'auth/user-disabled') {
-            errorMessage = 'This account has been disabled.';
-        } else if (error.code === 'auth/user-not-found') {
-            errorMessage = 'No account found with this email. Please sign up first.';
-        } else if (error.code === 'auth/wrong-password') {
-            errorMessage = 'Incorrect password. Please try again.';
-        } else if (error.code === 'auth/invalid-credential') {
-            errorMessage = 'Invalid email or password. Please check and try again.';
-        } else if (error.code === 'auth/too-many-requests') {
-            errorMessage = 'Too many failed login attempts. Please try again later.';
-        } else if (error.message) {
-            errorMessage = error.message;
-        }
-
-        alert(errorMessage);
-    } finally {
-        setIsLoading(false);
-    }
+    alert(errorMessage);
+} finally {
+    setIsLoading(false);
+}
 };
 
 return (
