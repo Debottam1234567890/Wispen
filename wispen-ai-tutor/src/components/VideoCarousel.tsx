@@ -2,9 +2,9 @@ import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const VIDEOS = [
-    { id: 'angry', src: '/angry.mp4', color: '#ff6b6b', text: "Stressed & Overwhelemed?", sub: "We've all been there." },
-    { id: 'focused', src: '/focused.mp4', color: '#4ecdc4', text: "Finding Focus...", sub: "Wispen guides the way." },
-    { id: 'happy', src: '/happy.mp4', color: '#ffe66d', text: "Achieving Goals!", sub: "Celebrate your wins." }
+    { id: 'angry', src: '/videos/mascot/angry.mp4', color: '#ff6b6b', text: "Stressed & Overwhelemed?", sub: "We've all been there." },
+    { id: 'focused', src: '/videos/mascot/focused.mp4', color: '#4ecdc4', text: "Finding Focus...", sub: "Wispen guides the way." },
+    { id: 'happy', src: '/videos/mascot/happy.mp4', color: '#ffe66d', text: "Achieving Goals!", sub: "Celebrate your wins." }
 ];
 
 const VideoSlide = ({ src, onEnded }: { src: string; onEnded: () => void }) => {

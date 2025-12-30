@@ -92,5 +92,17 @@ Without this step, your deployed website will try to contact `localhost` (your u
 
 ---
 
+
+## 🔐 Step 3: Firebase Configuration (Critical & Mandatory)
+
+1.  **Go to Firebase Console**: Navigate to **Authentication** -> **Settings** -> **Authorized Domains**.
+2.  **Add Domains**: You **MUST** add the following domains for Google Sign-In to work:
+    *   `wispen.vercel.app` (Your Vercel Frontend Domain)
+    *   `wispen-backend.onrender.com` (Your Render Backend Domain - purely for safety)
+3.  **Wait**: It might take a few minutes to propagate.
+4.  **Error**: If you see `auth/unauthorized-domain`, this is the step you missed!
+
+---
+
 ## 🚀 Done!
 Once both are active, your Wispen Tutor will be live on the web!
