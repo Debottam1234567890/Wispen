@@ -22,11 +22,13 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
 
     useEffect(() => {
         const checkRedirect = async () => {
+            console.log('Checking for redirect result...');
             try {
                 const result = await getRedirectResult(auth);
                 if (result) {
                     setIsLoading(true);
                     const user = result.user;
+                    console.log('Redirect result found for user:', user.email);
                     const token = await user.getIdToken();
 
                     console.log('Got Firebase ID Token, sending to backend...');
@@ -50,6 +52,8 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
                         alert(`Login failed: Server responded with ${response.status}. Check console for details.`);
                     }
                     setIsLoading(false);
+                } else {
+                    console.log('No redirect result found (result is null).');
                 }
             } catch (error: any) {
                 console.error('Redirect Login Error:', error);
