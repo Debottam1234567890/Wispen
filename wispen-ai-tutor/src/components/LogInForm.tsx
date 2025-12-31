@@ -66,7 +66,7 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
                 setIsLoggedIn(true);
                 setUid(user.uid);
             } else {
-                const errorData = await response ? await response.text() : 'Connection Failed';
+                const errorData = response ? await response.text() : 'Connection Failed';
                 console.error('Backend login failed:', response ? response.status : 'Network', errorData);
                 alert(`Backend Validation Failed: ${response ? response.status : 'Network Error'}\n${errorData}`);
             }
