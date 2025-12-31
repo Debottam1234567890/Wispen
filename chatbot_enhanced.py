@@ -685,13 +685,16 @@ class EdgeTTS:
                 q.put(None) # Signal done
 
             try:
+                print(f"DEBUG: EdgeTTS starting for text: {text[:30]}...", flush=True)
                 loop = asyncio.new_event_loop()
                 asyncio.set_event_loop(loop)
                 loop.run_until_complete(_async_gen())
                 loop.close()
+                print(f"DEBUG: EdgeTTS completed for text: {text[:30]}...", flush=True)
             except Exception as e:
-                print(f"TTS Stream Error: {e}")
+                print(f"TTS Stream Error: {e}", flush=True)
                 q.put(None)
+
 
         t = threading.Thread(target=_producer)
         t.start()

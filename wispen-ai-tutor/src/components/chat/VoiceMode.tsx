@@ -133,19 +133,29 @@ const VoiceMode = ({ isOpen, onClose, sessionId, onMessageSent }: VoiceModeProps
                 return clean;
             };
 
+            console.log('AI Response complete:', fullContent.substring(0, 50));
+            if (!fullContent.trim()) {
+                console.warn('AI Response is empty');
+                setError('AI returned no response');
+                setVoiceState('idle');
+                return;
+            }
+
             setAiResponse(fullContent);
             setVoiceState('speaking');
 
-            // Read AI response aloud (cleaned)
-            speak(cleanTextForTTS(fullContent));
+            const cleaned = cleanTextForTTS(fullContent);
+            console.log('Speaking (cleaned):', cleaned.substring(0, 50));
+            speak(cleaned);
 
-            // Notify parent with the custom IDs we used
             (onMessageSent as any)?.(messageText, fullContent, userMsgId, aiMsgId);
         } catch (err) {
             console.error('Error sending voice message:', err);
             setError('Failed to send message');
             setVoiceState('idle');
         }
+
+
     }, [sessionId, speak, onMessageSent]);
 
     // Clear silence timer

@@ -117,26 +117,36 @@ export const useTTS = (): UseTTSReturn => {
                 if (audioQueue.length > 0) {
                     const url = audioQueue.shift();
                     if (url) {
+                        console.log(`[useTTS] Playing segment ${playedCount + 1}:`, { url });
                         const audio = new Audio(url);
                         audioRef.current = audio;
 
                         audio.onended = () => {
+                            console.log(`[useTTS] Segment ${playedCount + 1} ended.`);
                             URL.revokeObjectURL(url);
                             playedCount++;
                             playNext();
                         };
 
-                        audio.onerror = () => {
-                            console.error("Audio playback error");
-                            playedCount++; // Count as played to avoid stall
+                        audio.onerror = (e) => {
+                            console.error(`[useTTS] Segment ${playedCount + 1} playback error:`, e);
+                            playedCount++;
                             playNext();
                         };
 
                         setTtsStatus('speaking...');
                         try {
-                            await audio.play();
+                            const playPromise = audio.play();
+                            if (playPromise !== undefined) {
+                                playPromise.catch(e => {
+                                    console.error("[useTTS] Audio play promise rejected:", e);
+                                    if (e.name === 'NotAllowedError') {
+                                        console.warn("[useTTS] Browser blocked autoplay. User gesture might have been lost.");
+                                    }
+                                });
+                            }
                         } catch (e) {
-                            console.error("Play error", e);
+                            console.error("[useTTS] Play exception:", e);
                             setIsSpeaking(false);
                         }
                     }
@@ -148,11 +158,13 @@ export const useTTS = (): UseTTSReturn => {
                 }
             };
 
+            console.log(`[useTTS] Starting fetch loop for ${sentences.length} sentences`);
             // Fetch Loop
             for (let i = 0; i < sentences.length; i++) {
                 if (controller.signal.aborted) break;
 
                 const sentence = sentences[i].trim();
+                console.log(`[useTTS] Fetching segment ${i + 1}/${sentences.length}: "${sentence.substring(0, 30)}..."`);
                 // If sentence is empty/spaces, just count it as fetched and continue
                 if (!sentence) {
                     fetchedCount++;
@@ -169,19 +181,22 @@ export const useTTS = (): UseTTSReturn => {
 
                     if (response.ok) {
                         const blob = await response.blob();
+                        console.log(`[useTTS] Fetched segment ${i + 1} successfully. Size: ${blob.size} bytes`);
                         const url = URL.createObjectURL(blob);
                         audioQueue.push(url);
                         fetchedCount++;
 
                         // If not currently playing, start playing immediately
                         if (!isPlaying && audioRef.current?.paused !== false) {
+                            console.log(`[useTTS] Starting initial playback from fetch loop`);
                             isPlaying = true;
                             playNext();
                         }
                     } else {
-                        console.error("Segment fetch failed", response.status);
+                        console.error(`[useTTS] Segment ${i + 1} fetch failed:`, response.status);
                         fetchedCount++; // Skip this segment
                     }
+
                 } catch (err: any) {
                     if (err.name !== 'AbortError') {
                         console.error("Segment fetch error", err);

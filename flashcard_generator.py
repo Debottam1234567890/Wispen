@@ -52,7 +52,7 @@ class Style:
 # AI API Configuration
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"
-GROQ_MODEL = "llama-3.3-70b-versatile"
+GROQ_MODEL = "llama-3.1-8b-instant"
 
 # Content chunking settings
 MAX_CONTENT_SIZE = 200000  # ~200KB per chunk for analysis
@@ -231,19 +231,16 @@ class FlashcardGenerator:
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 4096
+        max_tokens: int = 4096,
+        json_mode: bool = False
     ) -> str:
         """Call Groq API with fallback to multiple models on rate limit"""
         if not self.groq_api_key:
             return "Error: Groq API key not provided"
             
         models_to_try = [
-            "llama-3.3-70b-versatile",
             "llama-3.1-8b-instant",
-            "llama-3.2-1b-preview",
-            "llama-3.2-3b-preview",
-            "mixtral-8x7b-32768",
-            "gemma2-9b-it"
+            "mixtral-8x7b-32768"
         ]
         
         last_error = "Unknown error"
@@ -262,7 +259,8 @@ class FlashcardGenerator:
                             "model": model,
                             "messages": [{"role": "user", "content": prompt}],
                             "temperature": temperature,
-                            "max_tokens": max_tokens
+                            "max_tokens": max_tokens,
+                            "response_format": {"type": "json_object"} if json_mode else None
                         },
                         timeout=30
                     )
@@ -298,7 +296,8 @@ class FlashcardGenerator:
         self,
         prompt: str,
         temperature: float = 0.7,
-        max_tokens: int = 8192
+        max_tokens: int = 8192,
+        json_mode: bool = False
     ) -> str:
         """
         Unified Provider Pool: Prioritizes Groq models (per user request) 
@@ -309,7 +308,7 @@ class FlashcardGenerator:
         # --- PHASE 1: GROQ POOL (Primary) ---
         if self.groq_api_key:
             self._log("🧪 Attempting Groq Pool (Primary)...", Fore.CYAN)
-            groq_response = self._call_groq(prompt, temperature, min(max_tokens, 4096))
+            groq_response = self._call_groq(prompt, temperature, min(max_tokens, 4096), json_mode=json_mode)
             
             # If Groq actually returned a result (didn't return an error string)
             if not groq_response.startswith("Error:"):
@@ -391,7 +390,7 @@ class FlashcardGenerator:
         1. Mix of Q&A, definitions, and application problems.
         2. Ensure cards are detailed, technical, and study-optimized.
         3. If the context doesn't contain enough information for {num_cards} cards on "{topic}", use your internal expertise as a tutor to fulfill the request for this SPECIFIC topic.
-        4. **Use LaTeX math syntax** (e.g., $x^2$ or $\\frac{{a}}{{b}}$) for any mathematical formulas or scientific notation.
+        4. **Use LaTeX math syntax** (e.g., $x^2$). CRITICAL: You must DOUBLE ESCAPE backslashes for JSON (e.g. \\\\frac instead of \\frac).
         5. Respond ONLY with a valid JSON array of objects.
         
         Format:
@@ -408,11 +407,23 @@ class FlashcardGenerator:
         """
         
         try:
-            response = self._call_ai(prompt, temperature=0.7)
+            response = self._call_ai(prompt, temperature=0.7, json_mode=True)
+            self._log(f"DEBUG RAW RESPONSE: {response[:500]}...", Fore.CYAN)
             response = self._clean_json_response(response)
             
             raw_cards = json.loads(response)
             flashcards = []
+            
+            # Handle if response is wrapped in a dict (e.g. {"flashcards": [...]}) common in 8B models
+            if isinstance(raw_cards, dict):
+                 for key in ['flashcards', 'cards', 'items']:
+                     if key in raw_cards and isinstance(raw_cards[key], list):
+                         raw_cards = raw_cards[key]
+                         break
+            
+            # If still a dict (and no known key found), wrap in list if it looks like a single card
+            if isinstance(raw_cards, dict):
+                raw_cards = [raw_cards]
             
             for card_data in raw_cards:
                 if isinstance(card_data, dict) and 'front' in card_data and 'back' in card_data:

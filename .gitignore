@@ -60,8 +60,16 @@ test_tts*.mp3
 photosynthesis_*.mp4
 Screenshot*.png
 
+# Backend Testing
+backend/test.txt
+backend/test_pdf.pdf
+test_flashcard_gen.py
+
 # Backend Uploads
 backend/uploads/
+
+# Public Temp Videos
+wispen-ai-tutor/public/videos/temp_*/
 
 .idea/
 .vscode/

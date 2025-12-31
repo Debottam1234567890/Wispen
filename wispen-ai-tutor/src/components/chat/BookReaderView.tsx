@@ -191,12 +191,32 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
         }}>
             <div style={{ fontSize: '3rem', marginBottom: '10px' }}>⚠️</div>
             <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>Failed to load PDF</div>
-            <div style={{ fontSize: '0.9rem', maxWidth: '400px' }}>
-                {pdfError?.message || 'Unknown error'}
+            <div style={{ fontSize: '0.95rem', maxWidth: '400px', marginBottom: '15px' }}>
+                {pdfError?.message?.includes('Invalid') ?
+                    "The file couldn't be read. It might be missing from the server or corrupted." :
+                    (pdfError?.message || 'Unknown error')}
             </div>
-            <div style={{ fontSize: '0.8rem', marginTop: '10px', color: '#666' }}>
+            <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={onClose}
+                style={{
+                    padding: '8px 20px',
+                    background: '#ef4444',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    fontFamily: '"Caveat", cursive',
+                    fontSize: '1.1rem'
+                }}
+            >
+                Retry Re-upload
+            </motion.button>
+            <div style={{ fontSize: '0.8rem', marginTop: '20px', color: '#888', opacity: 0.7 }}>
                 Path: {bookPath}
             </div>
+
         </div>
     ), [pdfError, bookPath]);
 

@@ -64,8 +64,11 @@ CORS(app)  # Enable CORS for frontend
 
 # Configure Upload Folder
 UPLOAD_FOLDER = os.path.join(base_dir, 'uploads')
+print(f"DEBUG: UPLOAD_FOLDER is set to: {UPLOAD_FOLDER}", flush=True)
 if not os.path.exists(UPLOAD_FOLDER):
+    print(f"DEBUG: Creating {UPLOAD_FOLDER}", flush=True)
     os.makedirs(UPLOAD_FOLDER)
+
 
 # Initialize Firebase Admin SDK
 import json
@@ -552,6 +555,7 @@ def handle_upload():
     user = get_user_from_token()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+
     
     if 'file' not in request.files:
         return jsonify({"error": "No file part"}), 400
@@ -663,6 +667,7 @@ def handle_session_bookshelf(session_id):
         return jsonify({"error": "Unauthorized"}), 401
     
     uid = user['uid']
+
     # New collection path: users/{uid}/sessions/{session_id}/bookshelf
     col_ref = db.collection('users').document(uid).collection('sessions').document(session_id).collection('bookshelf')
 
@@ -863,6 +868,8 @@ def generate_video_mp4():
     user = get_user_from_token()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+    # user = {"uid": "test_debugger"}
+    # user = {"uid": "test_video_user"}
 
     data = request.json
     prompt = data.get('prompt') or data.get('topic')
@@ -1168,11 +1175,15 @@ Additional Book Context:
 Please generate comprehensive flashcards covering this topic using the provided context and your internal expertise."""
 
         # 3. GENERATE
+        print(f"DEBUG APP: Generating cards for topic='{topic}'. Content Len: {len(content_for_generator)}")
+        print(f"DEBUG APP: Generator instance: {flashcard_generator}")
+        
         flashcard_set = flashcard_generator.generate(
             content=content_for_generator,
             title=topic or "Generated Flashcards",
             difficulty="mixed"
         )
+        print(f"DEBUG APP: Generated {len(flashcard_set.cards)} cards from generator.")
         
         # 4. SAVE AND NOTIFY IF SUCCESSFUL
         if flashcard_set.cards:
@@ -1257,7 +1268,7 @@ def generate_flashcards_api():
     
     data = request.json
     topic = data.get('topic')
-    content = data.get('content')
+    content = data.get('content') # Optional override content
     session_id = data.get('sessionId') # Optional session for notifications
     
     if not topic and not content:
@@ -1444,13 +1455,16 @@ def handle_session_videos(session_id):
     
     uid = user['uid']
     # Videos are stored in their own 'videos' collection
+    print(f"DEBUG: Querying videos for users/{uid}/sessions/{session_id}/videos")
     col_ref = db.collection('users').document(uid).collection('sessions').document(session_id).collection('videos')
 
     try:
         # Fetch directly from videos collection
         docs = col_ref.stream()
         items = []
+        count = 0
         for doc in docs:
+            count += 1
             data = doc.to_dict()
             data['id'] = doc.id
             items.append(data)
@@ -1614,12 +1628,14 @@ def tts_endpoint():
     try:
         data = request.json
         text = data.get('text')
+        print(f"DEBUG: TTS Request for text: {text[:50]}...", flush=True)
         
         if not text:
             return jsonify({'error': 'No text provided'}), 400
             
         # Call Edge TTS (Streamed for Speed)
         return Response(stream_with_context(EdgeTTS.generate_speech_stream(text)), mimetype="audio/mpeg")
+
         
     except Exception as e:
         print(f"TTS Error: {e}")

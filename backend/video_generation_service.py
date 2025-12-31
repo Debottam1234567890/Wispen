@@ -506,14 +506,21 @@ class VideoGeneratorService:
             
             # Determine collection
             if session_id:
+                print(f"DEBUG: Writing to users/{user_id}/sessions/{session_id}/videos", flush=True)
                 col_ref = self.db.collection('users').document(user_id).collection('sessions').document(session_id).collection('videos')
             else:
+                print(f"DEBUG: Writing to users/{user_id}/videos", flush=True)
                 col_ref = self.db.collection('users').document(user_id).collection('videos')
                 
             doc_ref = col_ref.add(video_data)[1]
+            print(f"DEBUG: Created doc {doc_ref.id} in Firestore", flush=True)
             
             # 2. Generate Script
-            scenes = self.generate_script(topic)
+            try:
+                scenes = self.generate_script(topic)
+            except Exception as e:
+                print(f"❌ Script generation CRASHED: {e}", flush=True)
+                raise e
             
             # 3. Generate Assets Sequentially
             combined_audio = b""
