@@ -30,6 +30,7 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
             const token = await user.getIdToken();
 
             console.log('Got Firebase ID Token via Popup, sending to backend...');
+            console.log('Using API URL:', API_BASE_URL);
 
             // Send token to backend
             const response = await fetch(`${API_BASE_URL}/auth/google`, {
