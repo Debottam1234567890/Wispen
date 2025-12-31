@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { signInWithRedirect, getRedirectResult, signInWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { signInWithPopup, signInWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import { API_BASE_URL } from '../config';
 
@@ -20,66 +20,51 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
     const [uid, setUid] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
 
-    useEffect(() => {
-        const checkRedirect = async () => {
-            console.log('Checking for redirect result...');
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    setIsLoading(true);
-                    const user = result.user;
-                    console.log('Redirect result found for user:', user.email);
-                    const token = await user.getIdToken();
 
-                    console.log('Got Firebase ID Token, sending to backend...');
-
-                    // Send token to backend
-                    const response = await fetch(`${API_BASE_URL}/auth/google`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken: token }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('Backend login success:', data);
-                        setIsLoggedIn(true);
-                        setUid(user.uid);
-                    } else {
-                        // Extract error detail
-                        const errorData = await response.text();
-                        console.error('Backend login failed:', response.status, errorData);
-                        alert(`Login failed: Server responded with ${response.status}. Check console for details.`);
-                    }
-                    setIsLoading(false);
-                } else {
-                    console.log('No redirect result found (result is null).');
-                }
-            } catch (error: any) {
-                console.error('Redirect Login Error:', error);
-                alert(error.message || 'Google Login failed.');
-                setIsLoading(false);
-            }
-        };
-
-        checkRedirect();
-    }, []);
 
     const handleGoogleLogin = async () => {
         try {
             setIsLoading(true);
-            await signInWithRedirect(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            const token = await user.getIdToken();
+
+            console.log('Got Firebase ID Token via Popup, sending to backend...');
+
+            // Send token to backend
+            const response = await fetch(`${API_BASE_URL}/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: token }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Backend login success:', data);
+                setIsLoggedIn(true);
+                setUid(user.uid);
+            } else {
+                const errorData = await response.text();
+                console.error('Backend login failed:', response.status, errorData);
+                alert(`Backend Validation Failed: ${response.status}\n${errorData}`);
+            }
         } catch (error: any) {
-            console.error('Google Login Error:', error);
+            console.error('Popup Login Error:', error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                alert('Login Popup was closed. \n1. Please try again.\n2. Disable URL/Popup blockers.\n3. Ensure this domain is authorized in Firebase.');
+            } else if (error.code === 'auth/unauthorized-domain') {
+                alert(`Domain Error: ${window.location.hostname} is not authorized in Firebase Console.\nPlease add it to Authentication -> Settings -> Authorized Domains.`);
+            } else {
+                alert(`Login Failed: ${error.message}`);
+            }
+        } finally {
             setIsLoading(false);
         }
     };
 
-
     const handleLogin = async () => {
         try {
             setIsLoading(true);
-
 
             // Sign in with Firebase Authentication
             const userCredential = await signInWithEmailAndPassword(
@@ -110,8 +95,7 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
             }
         } catch (error: any) {
             console.error('Login Error:', error);
-
-            // User-friendly error messages
+            // ... (rest of error handling)
             let errorMessage = 'Login failed. Please try again.';
 
             if (error.code === 'auth/invalid-email') {

@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { signInWithRedirect, getRedirectResult, createUserWithEmailAndPassword } from 'firebase/auth';
+import { useState } from 'react';
+import { signInWithPopup, createUserWithEmailAndPassword } from 'firebase/auth';
 import { auth, googleProvider } from '../firebase';
 import { API_BASE_URL } from '../config';
 
@@ -35,54 +35,45 @@ const SignUpForm = ({ onSwitchToLogin, onEnterFactory }: SignUpFormProps) => {
         goals: [] as string[]
     });
 
-    useEffect(() => {
-        const checkRedirect = async () => {
-            try {
-                const result = await getRedirectResult(auth);
-                if (result) {
-                    setIsLoading(true);
-                    const user = result.user;
-                    const token = await user.getIdToken();
-
-                    // Send token to backend
-                    const response = await fetch(`${API_BASE_URL}/auth/google`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ idToken: token }),
-                    });
-
-                    if (response.ok) {
-                        const data = await response.json();
-                        console.log('Backend auth success:', data);
-                        setFormData(prev => ({
-                            ...prev,
-                            email: user.email || '',
-                            nickname: user.displayName || '',
-                        }));
-                        setUid(user.uid);
-                        setStep(2);
-                    } else {
-                        console.error('Backend auth failed');
-                        alert('Authentication with backend failed. Please try again.');
-                    }
-                    setIsLoading(false);
-                }
-            } catch (error: any) {
-                console.error('Redirect Sign-In Error:', error);
-                alert(error.message || 'Google Sign-In failed.');
-                setIsLoading(false);
-            }
-        };
-
-        checkRedirect();
-    }, []);
-
     const handleGoogleSignUp = async () => {
         try {
             setIsLoading(true);
-            await signInWithRedirect(auth, googleProvider);
+            const result = await signInWithPopup(auth, googleProvider);
+            const user = result.user;
+            const token = await user.getIdToken();
+
+            // Send token to backend
+            const response = await fetch(`${API_BASE_URL}/auth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken: token }),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Backend auth success:', data);
+                setFormData(prev => ({
+                    ...prev,
+                    email: user.email || '',
+                    nickname: user.displayName || '',
+                }));
+                setUid(user.uid);
+                setStep(2);
+            } else {
+                const errorData = await response.text();
+                console.error('Backend auth failed:', response.status, errorData);
+                alert(`Backend Validation Failed: ${response.status}\n${errorData}`);
+            }
         } catch (error: any) {
             console.error('Google Sign-In Error:', error);
+            if (error.code === 'auth/popup-closed-by-user') {
+                alert('Sign-In Popup was closed. \n1. Please try again.\n2. Disable URL/Popup blockers.\n3. Ensure this domain is authorized in Firebase.');
+            } else if (error.code === 'auth/unauthorized-domain') {
+                alert(`Domain Error: ${window.location.hostname} is not authorized in Firebase Console.\nPlease add it to Authentication -> Settings -> Authorized Domains.`);
+            } else {
+                alert(`Sign-In Failed: ${error.message}`);
+            }
+        } finally {
             setIsLoading(false);
         }
     };
