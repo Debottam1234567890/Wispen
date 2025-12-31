@@ -43,7 +43,7 @@ export default function GoldenTicketButton({ onClick }: GoldenTicketButtonProps)
         {/* Border decoration */}
         <div className="ticket-border">
           <svg width="100%" height="100%" preserveAspectRatio="none">
-            <rect x="5" y="5" width="calc(100% - 10px)" height="calc(100% - 10px)"
+            <rect x="5" y="5" style={{ width: "calc(100% - 10px)", height: "calc(100% - 10px)" }}
               fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2" strokeDasharray="4,4" />
           </svg>
         </div>
