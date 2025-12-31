@@ -44,19 +44,26 @@ except ImportError as e:
     print(f"Warning: Could not import VideoGeneratorService: {e}")
 
 # Initialize OpenSearch
+# Initialize OpenSearch
 opensearch_manager = None
 try:
-    opensearch_manager = OpenSearchManager()
-    print("✅ Connected to OpenSearch")
+    if os.getenv('OPENSEARCH_HOST'):
+        opensearch_manager = OpenSearchManager()
+        print("✅ Connected to OpenSearch")
+    else:
+        print("ℹ️ OPENSEARCH_HOST not set, skipping OpenSearch initialization")
 except Exception as e:
-    print(f"⚠️ OpenSearch connection failed: {e}")
+    print(f"⚠️ OpenSearch connection failed (non-fatal): {e}")
 
+# Explicit absolute path for static folder to avoid 404s
+base_dir = os.path.dirname(os.path.abspath(__file__))
+static_folder_path = os.path.join(os.path.dirname(base_dir), "wispen-ai-tutor", "dist")
 
-app = Flask(__name__, static_folder="../wispen-ai-tutor/dist", static_url_path="/")
+app = Flask(__name__, static_folder=static_folder_path, static_url_path="/")
 CORS(app)  # Enable CORS for frontend
 
 # Configure Upload Folder
-UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'uploads')
+UPLOAD_FOLDER = os.path.join(base_dir, 'uploads')
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
