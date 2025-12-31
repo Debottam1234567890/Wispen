@@ -2,12 +2,13 @@ flask
 flask-cors
 firebase-admin
 python-dotenv
-requests
+requests>=2.31.0
 edge-tts
-opensearch-py
+opensearch-py>=2.4.0
+urllib3>=1.26.18
 mutagen>=1.45.0
 Pillow>=11.0.0
-google-generativeai
+google-generativeai>=0.3.0
 groq
 pypdf2
 beautifulsoup4
