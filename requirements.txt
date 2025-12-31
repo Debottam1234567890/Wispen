@@ -14,3 +14,4 @@ pypdf2
 beautifulsoup4
 yt-dlp
 moviepy
+tavily-python
