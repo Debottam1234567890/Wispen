@@ -32,22 +32,43 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
             console.log('Got Firebase ID Token via Popup, sending to backend...');
             console.log('Using API URL:', API_BASE_URL);
 
-            // Send token to backend
-            const response = await fetch(`${API_BASE_URL}/auth/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken: token }),
-            });
+            // Retry logic for Cold Start (Render Free Tier)
+            let response;
+            let retries = 3;
+            while (retries > 0) {
+                try {
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
 
-            if (response.ok) {
+                    response = await fetch(`${API_BASE_URL}/auth/google`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken: token }),
+                        signal: controller.signal
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (response.ok) break; // Success
+                    if (response.status !== 503 && response.status !== 504) throw new Error(response.statusText); // Don't retry client errors
+                } catch (err) {
+                    console.log(`Backend connection attempt failed (${retries} retries left):`, err);
+                    if (retries === 1) throw err; // Throw on last fail
+                    retries--;
+                    // Show waking up status
+                    alert(`Waking up the server... Please wait a moment. (${3 - retries}/3)`);
+                    await new Promise(res => setTimeout(res, 4000)); // Wait 4s
+                }
+            }
+
+            if (response && response.ok) {
                 const data = await response.json();
                 console.log('Backend login success:', data);
                 setIsLoggedIn(true);
                 setUid(user.uid);
             } else {
-                const errorData = await response.text();
-                console.error('Backend login failed:', response.status, errorData);
-                alert(`Backend Validation Failed: ${response.status}\n${errorData}`);
+                const errorData = await response ? await response.text() : 'Connection Failed';
+                console.error('Backend login failed:', response ? response.status : 'Network', errorData);
+                alert(`Backend Validation Failed: ${response ? response.status : 'Network Error'}\n${errorData}`);
             }
         } catch (error: any) {
             console.error('Popup Login Error:', error);
@@ -56,7 +77,7 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
             } else if (error.code === 'auth/unauthorized-domain') {
                 alert(`Domain Error: ${window.location.hostname} is not authorized in Firebase Console.\nPlease add it to Authentication -> Settings -> Authorized Domains.`);
             } else {
-                alert(`Login Failed: ${error.message}`);
+                alert(`Login Failed: ${error.message}\n(Tip: The backend might be sleeping. Try again in 1 minute.)`);
             }
         } finally {
             setIsLoading(false);
@@ -77,16 +98,26 @@ const LogInForm = ({ onSwitchToSignUp, onEnterFactory }: LogInFormProps) => {
             const user = userCredential.user;
             const token = await user.getIdToken();
 
-            // Verify token with backend
-            const response = await fetch(`${API_BASE_URL}/auth/google`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ idToken: token }),
-            });
+            // Verify token with backend (with retry)
+            let response;
+            let retries = 3;
+            while (retries > 0) {
+                try {
+                    response = await fetch(`${API_BASE_URL}/auth/google`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ idToken: token }),
+                    });
+                    if (response.ok) break;
+                    if (response.status !== 503 && response.status !== 504) throw new Error(response.statusText);
+                } catch (err) {
+                    if (retries === 1) throw err;
+                    retries--;
+                    await new Promise(res => setTimeout(res, 2000));
+                }
+            }
 
-            if (response.ok) {
+            if (response && response.ok) {
                 const data = await response.json();
                 console.log('Backend login success:', data);
                 setIsLoggedIn(true);
