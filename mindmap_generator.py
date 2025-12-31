@@ -29,11 +29,22 @@ import time
 import uuid
 import re
 
-from colorama import Fore, Style, init
+# from colorama import Fore, Style, init (Removed for Render compatibility)
 from api_key_manager import APIKeyManager, call_gemini_with_retry
 
-# Initialize colorama
-init(autoreset=True)
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+
+class Style:
+    RESET_ALL = ""
+
+# init(autoreset=True)
 
 # Gemini API Configuration
 GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"

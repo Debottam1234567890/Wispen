@@ -27,11 +27,22 @@ from datetime import datetime
 import time
 import re
 
-from colorama import Fore, Style, init
+# from colorama import Fore, Style, init (Removed for Render compatibility)
 from api_key_manager import APIKeyManager
 
-# Initialize colorama
-init(autoreset=True)
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+
+class Style:
+    RESET_ALL = ""
+
+# init(autoreset=True)
 
 # AI API Configuration
 GROQ_API_URL = "https://api.groq.com/openai/v1/chat/completions"

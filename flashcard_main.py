@@ -24,14 +24,26 @@ from pathlib import Path
 from typing import List, Optional
 import time
 
-from colorama import Fore, Style, init
+# from colorama import Fore, Style, init (Removed for Render compatibility)
 from dotenv import load_dotenv
 
 # Import the flashcard generator and API key manager
 from flashcard_generator import FlashcardGenerator
 from api_key_manager import APIKeyManager
 
-init(autoreset=True)
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+
+class Style:
+    RESET_ALL = ""
+
+# init(autoreset=True)
 
 
 class FlashcardApp:

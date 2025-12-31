@@ -1,6 +1,22 @@
+# from colorama import Fore, Style, init
 from tavily import TavilyClient
-from colorama import Fore, Style, init
 import json
+
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+    MAGENTA = ""
+    WHITE = ""
+
+class Style:
+    RESET_ALL = ""
+
+# init(autoreset=True)
 
 class WebSearchClient:
     """A reusable class for performing web searches using the Tavily API."""
@@ -12,7 +28,7 @@ class WebSearchClient:
         Args:
             api_key (str): Tavily API key for authentication.
         """
-        init(autoreset=True)  # Initialize colorama for colored output
+        # init(autoreset=True)  # Initialize colorama for colored output
         self.tavily_client = TavilyClient(api_key=api_key)
 
     def search(self, query: str, include_raw_content: bool = True, include_answer: bool = True, search_depth: str = "advanced", max_results: int = 10) -> dict:

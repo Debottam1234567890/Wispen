@@ -32,11 +32,25 @@ except ImportError:
     print("Also install system Graphviz: https://graphviz.org/download/")
     exit(1)
 
-from colorama import Fore, Style, init
+# from colorama import Fore, Style, init (Removed for Render compatibility)
 from mindmap_generator import MindMapGenerator, MindMap, MindMapNode
 from api_key_manager import APIKeyManager
 
-init(autoreset=True)
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+    MAGENTA = ""
+    WHITE = ""
+
+class Style:
+    RESET_ALL = ""
+
+# init(autoreset=True)
 
 
 class EnhancedMindMapGenerator(MindMapGenerator):

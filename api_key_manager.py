@@ -8,7 +8,19 @@ automatically switching to alternate keys.
 
 import os
 from typing import List, Optional, Callable
-from colorama import Fore, Style
+# from colorama import Fore, Style (Removed for Render compatibility)
+
+# Dummy classes to replace colorama
+class Fore:
+    CYAN = ""
+    GREEN = ""
+    YELLOW = ""
+    RED = ""
+    BLUE = ""
+    RESET = ""
+
+class Style:
+    RESET_ALL = ""
 
 
 class APIKeyManager:
