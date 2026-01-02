@@ -488,7 +488,12 @@ class VideoGeneratorService:
         final_filename = f"video_{video_id}.mp4"
         final_video_path = os.path.join(PUBLIC_VIDEOS_DIR, final_filename)
         # Use absolute URL as requested by user for reliability
-        public_url = f"http://localhost:5000/videos/{final_filename}" 
+        # Use Render URL if available, else localhost
+        render_url = os.getenv('RENDER_EXTERNAL_URL')
+        if render_url:
+            public_url = f"{render_url}/videos/{final_filename}"
+        else:
+            public_url = f"http://localhost:5000/videos/{final_filename}" 
         
         full_audio_path = os.path.join(temp_dir, "full_audio.mp3")
         
@@ -622,7 +627,11 @@ class VideoGeneratorService:
         
         final_filename = f"video_{video_id}.mp4"
         final_video_path = os.path.join(PUBLIC_VIDEOS_DIR, final_filename)
-        public_url = f"http://localhost:5000/videos/{final_filename}"
+        render_url = os.getenv('RENDER_EXTERNAL_URL')
+        if render_url:
+            public_url = f"{render_url}/videos/{final_filename}"
+        else:
+            public_url = f"http://localhost:5000/videos/{final_filename}"
         full_audio_path = os.path.join(temp_dir, "full_audio.mp3")
         
         print(f"🎬 Starting Video Assembly Job (ID: {video_id}, Session: {session_id})")
