@@ -108,8 +108,9 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
         saveAnnotations(updatedNotes, highlights);
     };
 
-    // Sanitize bookPath to force HTTPS for Render backend to avoid Mixed Content errors
-    const secureBookPath = bookPath && bookPath.includes('onrender.com') && bookPath.startsWith('http://')
+    // Aggressively force HTTPS for Render backend to avoid Mixed Content errors
+    // The previous check was too strict. We want to upgrade ANY Render URL to HTTPS.
+    const secureBookPath = bookPath && bookPath.includes('onrender.com')
         ? bookPath.replace('http://', 'https://')
         : bookPath;
 
