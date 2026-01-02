@@ -11,18 +11,7 @@ from datetime import datetime
 from PIL import Image, ImageDraw, ImageFont
 
 # Import your existing utilities
-from chatbot_enhanced import GroqChat
 from firebase_admin import firestore
-import cloudinary
-import cloudinary.uploader
-
-# Configure Cloudinary
-cloudinary.config(
-    cloud_name="dt3hfixzk",
-    api_key="781619254554472",
-    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
-    secure=True
-)
 
 # Determine public videos path - MUST be within backend folder for Render deployment
 PUBLIC_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
