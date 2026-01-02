@@ -282,70 +282,60 @@ class VideoGeneratorService:
                 "Content-Type": "application/json"
             }
             
-            # Clean prompt and add STRICT no-text instruction
+            # Fast synchronous generation (img4)
+            gen_url = "https://api.infip.pro/v1/images/generations"
+            
+            # Clean prompt
             clean_prompt = prompt.replace("absolutely no text, no letters, no words, no writing", "").strip()
+            final_prompt = f"{clean_prompt}, colorful educational illustration, digital art, vibrant, absolutely no text no letters no words no writing"
             
             payload = {
-                "model": "nano-banana",
-                "prompt": f"{clean_prompt}, colorful educational illustration, digital art, vibrant, absolutely no text no letters no words no writing no labels no numbers no captions",
+                "model": "img4",
+                "prompt": final_prompt,
                 "n": 1,
-                "size": "1024x1024",
+                "size": "1792x1024",
                 "response_format": "url"
             }
             
-            response = requests.post(url, headers=headers, json=payload, timeout=90)
-            
+            print(f"    🚀 Sending request to Infip (img4)...")
+            response = requests.post(gen_url, headers=headers, json=payload, timeout=120)
+
             if response.status_code == 200:
                 data = response.json()
-                image_url = data["data"][0]["url"]
-            elif response.status_code == 202:
-                # Async mode - polling required
-                task_data = response.json()
-                poll_url = task_data.get("poll_url")
-                print(f"    ⏳ Generation pending, polling {poll_url}...")
-                
-                # Poll for up to 90 seconds
-                for p in range(18):
-                    time.sleep(5)
-                    poll_response = requests.get(poll_url, headers=headers, timeout=30)
-                    if poll_response.status_code == 200:
-                        p_data = poll_response.json()
-                        # When completed, the 'status' field is often removed and 'data' is returned
-                        if "data" in p_data and len(p_data["data"]) > 0:
-                            image_url = p_data["data"][0].get("url")
-                            if image_url:
-                                print(f"    ✓ Infip generation complete!")
-                                break
-                        elif p_data.get("status") in ["processing", "pending"]:
-                            print(f"    ... still processing ({p+1}/18)")
-                        elif p_data.get("status") == "completed":
-                            image_url = p_data.get("image_url") or p_data.get("data", [{}])[0].get("url")
-                            if image_url:
-                                break
-                        elif p_data.get("status") == "failed":
-                            print(f"    ❌ Infip task failed: {p_data.get('message')}")
-                            return False
-                    else:
-                         print(f"    ⚠ Poll failed with status {poll_response.status_code}")
+                if "data" in data and len(data["data"]) > 0:
+                    image_url = data["data"][0]["url"]
+                    print(f"    ✓ Infip generation successful")
                 else:
-                    print("    ❌ Polling timed out")
+                    print(f"    ⚠ Infip response missing data: {data}")
                     return False
             else:
                 print(f"    ⚠ Infip AI Error {response.status_code}: {response.text[:200]}")
                 return False
                 
             if 'image_url' in locals() and image_url:
-                # Download the image
-                img_response = requests.get(image_url, timeout=60)
-                if img_response.status_code == 200:
-                    img = Image.open(BytesIO(img_response.content))
-                    # Resize to standard 1280x720 for video
-                    img = img.resize((1280, 720), Image.Resampling.LANCZOS)
-                    img.save(output_path, quality=95)
-                    print(f"    ✓ Saved (Infip AI): {output_path}")
-                    return True
-                else:
-                    print(f"    ⚠ Failed to download image from Infip URL: {img_response.status_code}")
+                # Retry download logic
+                for attempt in range(3):
+                    try:
+                        img_response = requests.get(image_url, timeout=60)
+                        if img_response.status_code == 200:
+                            img = Image.open(BytesIO(img_response.content))
+                            img.load() # Force load to check for truncation
+                            # Resize to standard 1280x720 for video
+                            img = img.resize((1280, 720), Image.Resampling.LANCZOS)
+                            img.save(output_path, quality=95)
+                            print(f"    ✓ Saved (Infip AI): {output_path}")
+                            return True
+                        else:
+                            print(f"    ⚠ Download failed: {img_response.status_code}, retrying ({attempt+1}/3)")
+                    except (IOError, OSError) as e: # Catch truncation errors
+                        print(f"    ⚠ Image corrupted/truncated: {e}, retrying ({attempt+1}/3)")
+                        time.sleep(2)
+                    except Exception as e:
+                         print(f"    ⚠ Download error: {e}, retrying ({attempt+1}/3)")
+                         time.sleep(2)
+                
+                print(f"    ❌ Failed to download valid image after 3 attempts")
+                return False
         except Exception as e:
             print(f"    ⚠ Infip AI Exception: {e}")
             
@@ -457,20 +447,20 @@ class VideoGeneratorService:
     def combine_video(self, scenes_data: List[Dict], audio_path: str, output_path: str):
         """Combine images and audio into video using MoviePy."""
         try:
-            from moviepy import ImageClip, concatenate_videoclips, AudioFileClip
+            from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
             
             clips = []
             for scene in scenes_data:
                 img_path = scene['image_path']
                 duration = scene['duration']
-                clip = ImageClip(img_path).with_duration(duration)
+                clip = ImageClip(img_path).set_duration(duration)
                 clips.append(clip)
             
             final_video = concatenate_videoclips(clips, method="compose")
             
             if os.path.exists(audio_path):
                 audio = AudioFileClip(audio_path)
-                final_video = final_video.with_audio(audio)
+                final_video = final_video.set_audio(audio)
             
             final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=1, logger="bar")
             print("  ✅ Video rendering complete!", flush=True)
