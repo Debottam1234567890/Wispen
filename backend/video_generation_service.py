@@ -592,32 +592,18 @@ class VideoGeneratorService:
             print("  🎥 Rendering final video...")
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
-            # 5. Upload to Cloudinary for persistent URL
-            print("  ☁️ Uploading to Cloudinary...")
-            try:
-                upload_result = cloudinary.uploader.upload(
-                    final_video_path,
-                    resource_type="video",
-                    public_id=f"wispen_videos/{user_id}/{video_id}",
-                    overwrite=True
-                )
-                public_url = upload_result.get("secure_url")
-                print(f"  ✅ Uploaded to Cloudinary: {public_url}")
-            except Exception as upload_err:
-                print(f"  ⚠️ Cloudinary upload failed: {upload_err}")
-                # Fallback to Render URL if upload fails
-                render_url = os.getenv('RENDER_EXTERNAL_URL')
-                if render_url:
-                    public_url = f"{render_url}/videos/{final_filename}"
-                else:
-                    public_url = f"http://localhost:5000/videos/{final_filename}"
+            # 5. Use Local/Render URL
+            render_url = os.getenv('RENDER_EXTERNAL_URL')
+            if render_url:
+                public_url = f"{render_url}/videos/{final_filename}"
+            else:
+                public_url = f"http://localhost:5000/videos/{final_filename}"
             
-            # 6. Cleanup Temp
+            print(f"  ✅ Video saved locally: {public_url}")
+
+            # 6. Cleanup Temp (but KEEP the video file)
             import shutil
             shutil.rmtree(temp_dir)
-            # Also remove local video file since it's now in Firebase
-            if os.path.exists(final_video_path):
-                os.remove(final_video_path)
             
             # 7. Update Firestore: Complete
             if doc_ref:
