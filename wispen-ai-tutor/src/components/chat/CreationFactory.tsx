@@ -514,7 +514,7 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
             if (!user) throw new Error("Not authenticated");
 
             const token = await user.getIdToken();
-            const response = await fetch(`${API_BASE_URL}/generate_video_mp4`, {
+            const response = await fetch(`${API_BASE_URL}/videos/generate`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
