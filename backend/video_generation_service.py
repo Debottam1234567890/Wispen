@@ -582,13 +582,22 @@ class VideoGeneratorService:
                 import cloudinary
                 import cloudinary.uploader
                 
+                cloud_name = os.getenv('CLOUDINARY_CLOUD_NAME')
+                api_key = os.getenv('CLOUDINARY_API_KEY')
+                api_secret = os.getenv('CLOUDINARY_API_SECRET')
+                
+                print(f"  ☁️ Cloudinary Config: cloud={cloud_name}, key={'set' if api_key else 'MISSING'}, secret={'set' if api_secret else 'MISSING'}", flush=True)
+                
+                if not all([cloud_name, api_key, api_secret]):
+                    raise ValueError("Missing Cloudinary credentials in environment")
+                
                 cloudinary.config(
-                    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
-                    api_key=os.getenv('CLOUDINARY_API_KEY'),
-                    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+                    cloud_name=cloud_name,
+                    api_key=api_key,
+                    api_secret=api_secret
                 )
                 
-                print("  ☁️ Uploading to Cloudinary...")
+                print("  ☁️ Uploading to Cloudinary...", flush=True)
                 upload_response = cloudinary.uploader.upload(
                     final_video_path,
                     resource_type="video",
@@ -596,7 +605,7 @@ class VideoGeneratorService:
                     overwrite=True
                 )
                 public_url = upload_response.get('secure_url')
-                print(f"  ✅ Cloudinary upload complete: {public_url}")
+                print(f"  ✅ Cloudinary upload complete: {public_url}", flush=True)
             except Exception as cloud_err:
                 print(f"  ⚠️ Cloudinary upload failed: {cloud_err}, using local fallback")
                 # Fallback to local URL if Cloudinary fails
