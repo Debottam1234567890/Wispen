@@ -1768,6 +1768,7 @@ def log_response_info(response):
 # --- VIDEO ENDPOINTS ---
 @app.route('/videos/generate', methods=['POST'])
 def generate_video():
+    """Trigger background MP4 video generation with Cloudinary upload."""
     user = get_user_from_token()
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
@@ -1779,25 +1780,23 @@ def generate_video():
     
     if not topic:
         return jsonify({"error": "Missing topic"}), 400
+    
+    if not video_gen_service:
+        return jsonify({"error": "Video service not available"}), 503
         
-    try:
-        # Generate the serializable scene JSON
-        scene = video_agent.generate_scene(topic, uid, session_id)
-        
-        # Create a copy for Firestore with non-serializable timestamp
-        db_entry = scene.copy()
-        db_entry['timestamp'] = firestore.SERVER_TIMESTAMP
-        
-        # Save to Firestore
-        if session_id:
-            db.collection('users').document(uid).collection('sessions').document(session_id).collection('videos').add(db_entry)
-        else:
-            db.collection('users').document(uid).collection('videos').add(db_entry)
-            
-        return jsonify(scene), 200
-    except Exception as e:
-        print(f"Error in video generation endpoint: {e}")
-        return jsonify({"error": str(e)}), 500
+    # Start background thread for MP4 generation
+    thread = threading.Thread(
+        target=video_gen_service.generate_video_background_task,
+        args=(topic, uid, session_id)
+    )
+    thread.daemon = True
+    thread.start()
+    
+    return jsonify({
+        "message": "Video generation started. You'll be notified when it's ready!",
+        "topic": topic,
+        "status": "processing"
+    }), 202
 
 @app.route('/videos/test_generate', methods=['POST'])
 def test_generate_video():
