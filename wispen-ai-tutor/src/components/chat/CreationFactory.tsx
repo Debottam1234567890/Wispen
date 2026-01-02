@@ -1064,18 +1064,22 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
                                             key={video.id}
                                             whileHover={{ x: 5, backgroundColor: '#f9fafb' }}
                                             onClick={() => {
-                                                // Redirect directly to video URL
-                                                const videoUrl = video.videoUrl || video.video_url || video.url || video.fileUrl;
-                                                if (videoUrl) {
-                                                    const fullUrl = videoUrl.startsWith('http') ? videoUrl : `${API_BASE_URL}${videoUrl}`;
-                                                    window.open(fullUrl, '_blank');
-                                                } else {
-                                                    console.warn('No video URL found for:', video);
-                                                    alert('Video URL not available');
-                                                }
+                                                // Play in-app
+                                                setActiveVideo(video);
+                                                setViewItem('video');
                                                 setShowAllOutput(false);
                                             }}
-                                            style={{ padding: '12px', borderRadius: '12px', cursor: 'pointer', border: '1px solid #eee', marginBottom: '8px', background: 'white' }}
+                                            style={{
+                                                padding: '12px',
+                                                borderRadius: '12px',
+                                                cursor: 'pointer',
+                                                border: '1px solid #eee',
+                                                marginBottom: '8px',
+                                                background: 'white',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'space-between'
+                                            }}
                                         >
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                                                 <span style={{ fontSize: '1.2rem' }}>🎬</span>
@@ -1084,6 +1088,33 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
                                                     <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{video.steps?.length || 0} steps • {video.timestamp ? new Date(video.timestamp).toLocaleDateString() : 'Just now'}</div>
                                                 </div>
                                             </div>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const videoUrl = video.videoUrl || video.video_url || video.url || video.fileUrl;
+                                                    if (videoUrl) {
+                                                        const fullUrl = videoUrl.startsWith('http') ? videoUrl : `${API_BASE_URL}${videoUrl}`;
+                                                        window.open(fullUrl, '_blank');
+                                                    }
+                                                }}
+                                                title="Download Video"
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: '1.1rem',
+                                                    padding: '8px',
+                                                    borderRadius: '50%',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    color: '#6b7280'
+                                                }}
+                                                onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#f3f4f6'}
+                                                onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                            >
+                                                📥
+                                            </button>
                                         </motion.div>
                                     ))}
                                 </div>
