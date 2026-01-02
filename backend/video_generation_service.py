@@ -12,7 +12,17 @@ from PIL import Image, ImageDraw, ImageFont
 
 # Import your existing utilities
 from chatbot_enhanced import GroqChat
-from firebase_admin import firestore, storage
+from firebase_admin import firestore
+import cloudinary
+import cloudinary.uploader
+
+# Configure Cloudinary
+cloudinary.config(
+    cloud_name="dt3hfixzk",
+    api_key="781619254554472",
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True
+)
 
 # Determine public videos path - MUST be within backend folder for Render deployment
 PUBLIC_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
@@ -582,17 +592,19 @@ class VideoGeneratorService:
             print("  🎥 Rendering final video...")
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
-            # 5. Upload to Firebase Storage for persistent URL
-            print("  ☁️ Uploading to Firebase Storage...")
+            # 5. Upload to Cloudinary for persistent URL
+            print("  ☁️ Uploading to Cloudinary...")
             try:
-                bucket = storage.bucket()
-                blob = bucket.blob(f"videos/{user_id}/{final_filename}")
-                blob.upload_from_filename(final_video_path, content_type='video/mp4')
-                blob.make_public()
-                public_url = blob.public_url
-                print(f"  ✅ Uploaded to Firebase Storage: {public_url}")
+                upload_result = cloudinary.uploader.upload(
+                    final_video_path,
+                    resource_type="video",
+                    public_id=f"wispen_videos/{user_id}/{video_id}",
+                    overwrite=True
+                )
+                public_url = upload_result.get("secure_url")
+                print(f"  ✅ Uploaded to Cloudinary: {public_url}")
             except Exception as upload_err:
-                print(f"  ⚠️ Firebase upload failed, using local URL: {upload_err}")
+                print(f"  ⚠️ Cloudinary upload failed: {upload_err}")
                 # Fallback to Render URL if upload fails
                 render_url = os.getenv('RENDER_EXTERNAL_URL')
                 if render_url:
