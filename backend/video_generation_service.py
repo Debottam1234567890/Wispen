@@ -510,13 +510,17 @@ class VideoGeneratorService:
         print(f"🎬 Starting Video Generation Job: {topic} (ID: {video_id}, Session: {session_id})")
         
         try:
-             # 1. Update Firestore: Processing
+             # 1. Update Firestore: Processing - SAVE IMMEDIATELY so it shows in UI
             video_data = {
                 'title': topic,
+                'topic': topic,
                 'status': 'generating',
+                'timestamp': datetime.now().isoformat(),
                 'createdAt': datetime.now().isoformat(),
                 'type': 'video_mp4',
-                'sessionId': session_id
+                'sessionId': session_id,
+                'videoUrl': None,
+                'steps': []
             }
             
             # Determine collection
