@@ -14,8 +14,8 @@ from PIL import Image, ImageDraw, ImageFont
 from chatbot_enhanced import GroqChat
 from firebase_admin import firestore
 
-# Determine public videos path
-PUBLIC_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'wispen-ai-tutor', 'public', 'videos')
+# Determine public videos path - MUST be within backend folder for Render deployment
+PUBLIC_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
 os.makedirs(PUBLIC_VIDEOS_DIR, exist_ok=True)
 
 class VideoGeneratorService:

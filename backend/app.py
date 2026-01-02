@@ -597,7 +597,8 @@ def serve_upload(filename):
 @app.route('/videos/<filename>')
 def serve_video(filename):
     """Serve video files with proper MIME type for HTML5 playback."""
-    videos_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'wispen-ai-tutor', 'public', 'videos')
+    videos_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
+    os.makedirs(videos_dir, exist_ok=True)
     return send_from_directory(videos_dir, filename, mimetype='video/mp4')
 
 
