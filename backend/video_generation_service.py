@@ -12,7 +12,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 # Import your existing utilities
 from chatbot_enhanced import GroqChat
-from firebase_admin import firestore
+from firebase_admin import firestore, storage
 
 # Determine public videos path - MUST be within backend folder for Render deployment
 PUBLIC_VIDEOS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'videos')
@@ -582,15 +582,36 @@ class VideoGeneratorService:
             print("  🎥 Rendering final video...")
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
-            # 5. Cleanup Temp
+            # 5. Upload to Firebase Storage for persistent URL
+            print("  ☁️ Uploading to Firebase Storage...")
+            try:
+                bucket = storage.bucket()
+                blob = bucket.blob(f"videos/{user_id}/{final_filename}")
+                blob.upload_from_filename(final_video_path, content_type='video/mp4')
+                blob.make_public()
+                public_url = blob.public_url
+                print(f"  ✅ Uploaded to Firebase Storage: {public_url}")
+            except Exception as upload_err:
+                print(f"  ⚠️ Firebase upload failed, using local URL: {upload_err}")
+                # Fallback to Render URL if upload fails
+                render_url = os.getenv('RENDER_EXTERNAL_URL')
+                if render_url:
+                    public_url = f"{render_url}/videos/{final_filename}"
+                else:
+                    public_url = f"http://localhost:5000/videos/{final_filename}"
+            
+            # 6. Cleanup Temp
             import shutil
             shutil.rmtree(temp_dir)
+            # Also remove local video file since it's now in Firebase
+            if os.path.exists(final_video_path):
+                os.remove(final_video_path)
             
-            # 6. Update Firestore: Complete
+            # 7. Update Firestore: Complete
             if doc_ref:
                 doc_ref.update({
                     'status': 'completed',
-                    'videoUrl': public_url, # Frontend can load this
+                    'videoUrl': public_url, # Firebase Storage URL
                     'steps': scenes, # Save the script/steps for UI
                     'duration': sum(s['duration'] for s in processed_scenes),
                     'completedAt': datetime.now().isoformat()
