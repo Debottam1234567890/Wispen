@@ -447,20 +447,25 @@ class VideoGeneratorService:
     def combine_video(self, scenes_data: List[Dict], audio_path: str, output_path: str):
         """Combine images and audio into video using MoviePy."""
         try:
-            from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
+            # MoviePy v2.x compatible imports
+            try:
+                from moviepy.editor import ImageClip, concatenate_videoclips, AudioFileClip
+            except ImportError:
+                # Fallback for MoviePy v2.x
+                from moviepy import ImageClip, concatenate_videoclips, AudioFileClip
             
             clips = []
             for scene in scenes_data:
                 img_path = scene['image_path']
                 duration = scene['duration']
-                clip = ImageClip(img_path).set_duration(duration)
+                clip = ImageClip(img_path).with_duration(duration)
                 clips.append(clip)
             
             final_video = concatenate_videoclips(clips, method="compose")
             
             if os.path.exists(audio_path):
                 audio = AudioFileClip(audio_path)
-                final_video = final_video.set_audio(audio)
+                final_video = final_video.with_audio(audio)
             
             final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=1, logger="bar")
             print("  ✅ Video rendering complete!", flush=True)
