@@ -1066,19 +1066,9 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
                                             onClick={() => {
                                                 const videoUrl = video.videoUrl || video.video_url || video.url || video.fileUrl;
                                                 if (videoUrl) {
+                                                    // Cloudinary URLs are streamable - open in new tab for playback
                                                     const fullUrl = videoUrl.startsWith('http') ? videoUrl : `${API_BASE_URL}${videoUrl}`;
-
-                                                    // Create temporary link to force download
-                                                    const link = document.createElement('a');
-                                                    link.href = fullUrl;
-                                                    link.target = '_blank';
-                                                    // Try to use title as filename, fallback to ID
-                                                    const filename = video.title ? `${video.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4` : `wispen_video_${video.id}.mp4`;
-                                                    link.download = filename;
-
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
+                                                    window.open(fullUrl, '_blank');
                                                 } else {
                                                     console.warn("No URL found for video:", video);
                                                 }
@@ -1102,7 +1092,7 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
                                                     <div style={{ fontSize: '0.75rem', color: '#9ca3af' }}>{video.steps?.length || 0} steps • {video.timestamp ? new Date(video.timestamp).toLocaleDateString() : 'Just now'}</div>
                                                 </div>
                                             </div>
-                                            <span style={{ fontSize: '1.2rem', color: '#6b7280' }}>⬇️</span>
+                                            <span style={{ fontSize: '1.2rem', color: '#6b7280' }}>▶️</span>
                                         </motion.div>
                                     ))}
                                 </div>

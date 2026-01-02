@@ -576,16 +576,39 @@ class VideoGeneratorService:
             print("  🎥 Rendering final video...")
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
-            # 5. Use Local/Render URL
-            render_url = os.getenv('RENDER_EXTERNAL_URL')
-            if render_url:
-                public_url = f"{render_url}/videos/{final_filename}"
-            else:
-                public_url = f"http://localhost:5000/videos/{final_filename}"
+            # 5. Upload to Cloudinary for CDN playback
+            public_url = None
+            try:
+                import cloudinary
+                import cloudinary.uploader
+                
+                cloudinary.config(
+                    cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME'),
+                    api_key=os.getenv('CLOUDINARY_API_KEY'),
+                    api_secret=os.getenv('CLOUDINARY_API_SECRET')
+                )
+                
+                print("  ☁️ Uploading to Cloudinary...")
+                upload_response = cloudinary.uploader.upload(
+                    final_video_path,
+                    resource_type="video",
+                    public_id=f"wispen_videos/{final_filename.replace('.mp4', '')}",
+                    overwrite=True
+                )
+                public_url = upload_response.get('secure_url')
+                print(f"  ✅ Cloudinary upload complete: {public_url}")
+            except Exception as cloud_err:
+                print(f"  ⚠️ Cloudinary upload failed: {cloud_err}, using local fallback")
+                # Fallback to local URL if Cloudinary fails
+                render_url = os.getenv('RENDER_EXTERNAL_URL')
+                if render_url:
+                    public_url = f"{render_url}/videos/{final_filename}"
+                else:
+                    public_url = f"http://localhost:5000/videos/{final_filename}"
             
-            print(f"  ✅ Video saved locally: {public_url}")
+            print(f"  ✅ Video available at: {public_url}")
 
-            # 6. Cleanup Temp (but KEEP the video file)
+            # 6. Cleanup Temp (but KEEP the video file for local fallback)
             import shutil
             shutil.rmtree(temp_dir)
             
@@ -593,7 +616,7 @@ class VideoGeneratorService:
             if doc_ref:
                 doc_ref.update({
                     'status': 'completed',
-                    'videoUrl': public_url, # Firebase Storage URL
+                    'videoUrl': public_url, # Cloudinary CDN URL
                     'steps': scenes, # Save the script/steps for UI
                     'duration': sum(s['duration'] for s in processed_scenes),
                     'completedAt': datetime.now().isoformat()
