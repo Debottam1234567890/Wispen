@@ -108,17 +108,23 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
         saveAnnotations(updatedNotes, highlights);
     };
 
-    const isPDF = useMemo(() => fileType === 'pdf' || (!fileType && bookPath.toLowerCase().endsWith('.pdf')), [bookPath, fileType]);
-    const isImage = useMemo(() => fileType === 'image' || (!fileType && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(bookPath)), [bookPath, fileType]);
-    const isVideo = useMemo(() => fileType === 'video' || (!fileType && /\.(mp4|webm|ogg)$/i.test(bookPath)), [bookPath, fileType]);
-    const isText = useMemo(() => fileType === 'text' || (!fileType && /\.(txt|md|json|csv|xml)$/i.test(bookPath)), [bookPath, fileType]);
+    // Sanitize bookPath to force HTTPS for Render backend to avoid Mixed Content errors
+    const secureBookPath = bookPath && bookPath.includes('onrender.com') && bookPath.startsWith('http://')
+        ? bookPath.replace('http://', 'https://')
+        : bookPath;
+
+    const isPDF = useMemo(() => fileType === 'pdf' || (!fileType && secureBookPath.toLowerCase().endsWith('.pdf')), [secureBookPath, fileType]);
+    const isImage = useMemo(() => fileType === 'image' || (!fileType && /\.(jpg|jpeg|png|gif|webp|bmp|svg)$/i.test(secureBookPath)), [secureBookPath, fileType]);
+    const isVideo = useMemo(() => fileType === 'video' || (!fileType && /\.(mp4|webm|ogg)$/i.test(secureBookPath)), [secureBookPath, fileType]);
+    const isText = useMemo(() => fileType === 'text' || (!fileType && /\.(txt|md|json|csv|xml)$/i.test(secureBookPath)), [secureBookPath, fileType]);
 
     // Fetch text content
     useEffect(() => {
-        if (isText && bookPath) {
+        if (isText && secureBookPath) {
             setIsTextLoading(true);
-            fetch(bookPath)
+            fetch(secureBookPath)
                 .then(res => res.text())
+
                 .then(text => {
                     setTextContent(text);
                     setIsTextLoading(false);
@@ -699,7 +705,7 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
                         {isPDF ? (
                             <div ref={pdfContainerRef} style={{ position: 'relative', width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start' }}>
                                 <Document
-                                    file={bookPath}
+                                    file={secureBookPath}
                                     onLoadSuccess={onDocumentLoadSuccess}
                                     onLoadError={onDocumentLoadError}
                                     options={options}
@@ -835,7 +841,7 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
                         ) : (
                             isImage ? (
                                 <img
-                                    src={bookPath}
+                                    src={secureBookPath}
                                     alt={bookTitle}
                                     style={{
                                         maxWidth: '100%',
@@ -857,7 +863,7 @@ const BookReaderView = ({ bookId, bookTitle, bookPath, fileType, initialStickyNo
                                     overflow: 'hidden'
                                 }}>
                                     <video
-                                        src={bookPath}
+                                        src={secureBookPath}
                                         controls
                                         autoPlay
                                         style={{

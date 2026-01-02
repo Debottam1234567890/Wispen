@@ -270,7 +270,7 @@ const BookshelfNebula: React.FC<BookshelfNebulaProps> = ({ sessionId }) => {
                         </motion.button>
                     )}
                     <p style={{ fontSize: '0.9rem', color: '#666', marginTop: '10px' }}>
-                        💡 Drag & Drop or Click to Upload
+                        💡 Click to Upload
                     </p>
                 </div>
 
