@@ -472,10 +472,11 @@ class VideoGeneratorService:
                 audio = AudioFileClip(audio_path)
                 final_video = final_video.with_audio(audio)
             
-            final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", logger=None)
+            final_video.write_videofile(output_path, fps=24, codec="libx264", audio_codec="aac", preset="ultrafast", threads=1, logger="bar")
+            print("  ✅ Video rendering complete!", flush=True)
             return True
         except Exception as e:
-            print(f"  ❌ Rendering failed: {e}")
+            print(f"  ❌ Rendering failed: {e}", flush=True)
             return False
 
     def generate_video_background_task(self, topic: str, user_id: str, session_id: str = None):
@@ -496,7 +497,7 @@ class VideoGeneratorService:
         
         full_audio_path = os.path.join(temp_dir, "full_audio.mp3")
         
-        print(f"🎬 Starting Video Generation Job: {topic} (ID: {video_id}, Session: {session_id})")
+        print(f"🎬 Starting Video Generation Job: {topic} (ID: {video_id}, Session: {session_id})", flush=True)
         
         try:
              # 1. Update Firestore: Processing - SAVE IMMEDIATELY so it shows in UI
