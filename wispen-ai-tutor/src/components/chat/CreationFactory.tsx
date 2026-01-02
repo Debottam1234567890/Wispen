@@ -1067,13 +1067,21 @@ const CreationFactory: React.FC<CreationFactoryProps> = ({ onOpenMindmap, onOpen
                                                 const videoUrl = video.videoUrl || video.video_url || video.url || video.fileUrl;
                                                 if (videoUrl) {
                                                     const fullUrl = videoUrl.startsWith('http') ? videoUrl : `${API_BASE_URL}${videoUrl}`;
-                                                    window.open(fullUrl, '_blank');
+
+                                                    // Create temporary link to force download
+                                                    const link = document.createElement('a');
+                                                    link.href = fullUrl;
+                                                    link.target = '_blank';
+                                                    // Try to use title as filename, fallback to ID
+                                                    const filename = video.title ? `${video.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}.mp4` : `wispen_video_${video.id}.mp4`;
+                                                    link.download = filename;
+
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
                                                 } else {
                                                     console.warn("No URL found for video:", video);
                                                 }
-                                                // Don't close the modal immediately so they can see it worked? 
-                                                // Or close it? Usually "download" doesn't require closing.
-                                                // Users might want to download multiple.
                                             }}
                                             style={{
                                                 padding: '12px',
