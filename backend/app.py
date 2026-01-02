@@ -119,8 +119,8 @@ bucket = storage.bucket()
 
 # Initialize Video Service with DB
 if 'VideoGeneratorService' in globals():
+    global video_gen_service
     try:
-        global video_gen_service
         video_gen_service = VideoGeneratorService(db)
         print("✅ VideoGeneratorService Initialized")
     except Exception as e:
