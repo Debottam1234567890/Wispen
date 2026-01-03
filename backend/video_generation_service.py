@@ -28,7 +28,7 @@ class VideoGeneratorService:
 
     def generate_script(self, topic: str) -> List[Dict]:
         """Use LLM to generate a 5-scene educational script."""
-        print(f"  🧠 Generating script for: {topic}")
+        print(f"  🧠 Generating script for: {topic}", flush=True)
         
         prompt = f"""
         Create a 5-scene educational video script about: "{topic}".
@@ -70,10 +70,10 @@ class VideoGeneratorService:
             # Use direct API call for custom params (max_tokens)
             groq_key = os.getenv("GROQ_API_KEY")
             if not groq_key:
-                print("  ❌ No Groq API key found")
+                print("  ❌ No Groq API key found", flush=True)
                 return fallback_script
 
-            print(f"  🤖 Sending to Groq (llama-3.1-8b-instant)...")
+            print(f"  🤖 Sending to Groq (llama-3.1-8b-instant)...", flush=True)
             
             payload = {
                 "model": "llama-3.1-8b-instant", # Cheaper & Faster
@@ -100,11 +100,11 @@ class VideoGeneratorService:
                 data = response_raw.json()
                 response = data["choices"][0]["message"]["content"]
             else:
-                print(f"  ❌ Groq API Error {response_raw.status_code}: {response_raw.text}")
+                print(f"  ❌ Groq API Error {response_raw.status_code}: {response_raw.text}", flush=True)
                 return fallback_script
             
-            print(f"  📝 Raw LLM response type: {type(response)}")
-            print(f"  📝 Raw LLM response preview: {str(response)[:200]}...")
+            print(f"  📝 Raw LLM response type: {type(response)}", flush=True)
+            print(f"  📝 Raw LLM response preview: {str(response)[:200]}...", flush=True)
             
             # Clean response if needed (remove markdown)
             if isinstance(response, str):
@@ -115,7 +115,7 @@ class VideoGeneratorService:
             else:
                 script = response
             
-            print(f"  📝 Parsed script type: {type(script)}")
+            print(f"  📝 Parsed script type: {type(script)}", flush=True)
             
             # Validate - must be a list
             if isinstance(script, dict):
@@ -132,37 +132,37 @@ class VideoGeneratorService:
                             break
             
             if not isinstance(script, list):
-                print(f"  ❌ Script is not a list: {type(script)}")
+                print(f"  ❌ Script is not a list: {type(script)}", flush=True)
                 return fallback_script
                 
             if len(script) == 0:
-                print(f"  ❌ Script is empty")
+                print(f"  ❌ Script is empty", flush=True)
                 return fallback_script
             
             # Validate each scene has required keys
             for i, scene in enumerate(script):
                 if not isinstance(scene, dict):
-                    print(f"  ❌ Scene {i} is not a dict: {type(scene)}")
+                    print(f"  ❌ Scene {i} is not a dict: {type(scene)}", flush=True)
                     return fallback_script
                 if 'narration' not in scene or 'image_prompt' not in scene:
-                    print(f"  ⚠️ Scene {i} missing keys, adding defaults")
+                    print(f"  ⚠️ Scene {i} missing keys, adding defaults", flush=True)
                     scene.setdefault('narration', f"This is scene {i+1} about {topic}.")
                     scene.setdefault('image_prompt', f"educational illustration of {topic}, scene {i+1}")
                     scene.setdefault('overlay_text', f"Scene {i+1}")
                     scene.setdefault('overlay_position', 'top')
             
             
-            print(f"  ✅ Script validated: {len(script)} scenes")
+            print(f"  ✅ Script validated: {len(script)} scenes", flush=True)
             
             # Ensure we have 10 scenes
             if len(script) < 10:
-                print(f"  ⚠️ WARNING: Only {len(script)} scenes generated (expected 10)")
-                print(f"  ⚠️ This may be due to token limits or LLM response truncation")
+                print(f"  ⚠️ WARNING: Only {len(script)} scenes generated (expected 10)", flush=True)
+                print(f"  ⚠️ This may be due to token limits or LLM response truncation", flush=True)
             
             return script
             
         except Exception as e:
-            print(f"  ❌ Script generation failed: {e}")
+            print(f"  ❌ Script generation failed: {e}", flush=True)
             import traceback
             traceback.print_exc()
             return fallback_script
@@ -187,7 +187,7 @@ class VideoGeneratorService:
         encoded_prompt = urllib.parse.quote(enhanced_prompt)
 
         for model in models:
-            print(f"    Trying Pollinations model: {model}...")
+            print(f"    Trying Pollinations model: {model}...", flush=True)
             for attempt in range(max_retries):
                 try:
                     url = f"https://gen.pollinations.ai/image/{encoded_prompt}?model={model}&nologo=true&seed={int(time.time() + attempt)}"
@@ -202,19 +202,19 @@ class VideoGeneratorService:
                         img = Image.open(BytesIO(response.content))
                         img = img.resize((1280, 720), Image.Resampling.LANCZOS)
                         img.save(output_path, quality=95)
-                        print(f"    ✓ Saved ({model}): {output_path}")
+                        print(f"    ✓ Saved ({model}): {output_path}", flush=True)
                         return True
                     else:
-                        print(f"    ⚠ HTTP {response.status_code} ({model}) at attempt {attempt+1}")
+                        print(f"    ⚠ HTTP {response.status_code} ({model}) at attempt {attempt+1}", flush=True)
                         # If flux is down, don't waste all retries, move to turbo
                         if model == "flux" and "No active flux servers available" in response.text:
-                            print("    ⚠ Flux servers down. Switching to Turbo fallback...")
+                            print("    ⚠ Flux servers down. Switching to Turbo fallback...", flush=True)
                             break
                         
                         time.sleep(2)
                         
                 except Exception as e:
-                    print(f"    ⚠ Error on {model} attempt {attempt+1}: {e}")
+                    print(f"    ⚠ Error on {model} attempt {attempt+1}: {e}", flush=True)
                     time.sleep(2)
         
         return False
@@ -225,7 +225,7 @@ class VideoGeneratorService:
         if not api_key:
             return False
             
-        print("    Trying Stability AI fallback...")
+        print("    Trying Stability AI fallback...", flush=True)
         try:
             # Clean prompt for Stability with STRICT no-text instruction
             clean_prompt = prompt.replace("absolutely no text, no letters, no words, no writing", "").strip()
@@ -258,12 +258,12 @@ class VideoGeneratorService:
                     img = Image.open(BytesIO(image_data))
                     img = img.resize((1280, 720), Image.Resampling.LANCZOS)
                     img.save(output_path, quality=95)
-                    print(f"    ✓ Saved (Stability AI): {output_path}")
+                    print(f"    ✓ Saved (Stability AI): {output_path}", flush=True)
                     return True
             else:
-                print(f"    ⚠ Stability AI Error: {response.text[:200]}")
+                print(f"    ⚠ Stability AI Error: {response.text[:200]}", flush=True)
         except Exception as e:
-            print(f"    ⚠ Stability AI Exception: {e}")
+            print(f"    ⚠ Stability AI Exception: {e}", flush=True)
         
         return False
 
@@ -271,10 +271,10 @@ class VideoGeneratorService:
         """Generate image using Infip AI with nano-banana model at 1024x1024."""
         api_key = os.getenv("VIDEO_API_KEY")
         if not api_key:
-            print("    ❌ No VIDEO_API_KEY found")
+            print("    ❌ No VIDEO_API_KEY found", flush=True)
             return False
             
-        print("    Trying Infip AI (nano-banana)...")
+        print("    Trying Infip AI (nano-banana)...", flush=True)
         try:
             url = "https://api.infip.pro/v1/images/generations"
             headers = {
@@ -297,19 +297,19 @@ class VideoGeneratorService:
                 "response_format": "url"
             }
             
-            print(f"    🚀 Sending request to Infip (img4)...")
+            print(f"    🚀 Sending request to Infip (img4)...", flush=True)
             response = requests.post(gen_url, headers=headers, json=payload, timeout=120)
 
             if response.status_code == 200:
                 data = response.json()
                 if "data" in data and len(data["data"]) > 0:
                     image_url = data["data"][0]["url"]
-                    print(f"    ✓ Infip generation successful")
+                    print(f"    ✓ Infip generation successful", flush=True)
                 else:
-                    print(f"    ⚠ Infip response missing data: {data}")
+                    print(f"    ⚠ Infip response missing data: {data}", flush=True)
                     return False
             else:
-                print(f"    ⚠ Infip AI Error {response.status_code}: {response.text[:200]}")
+                print(f"    ⚠ Infip AI Error {response.status_code}: {response.text[:200]}", flush=True)
                 return False
                 
             if 'image_url' in locals() and image_url:
@@ -323,21 +323,21 @@ class VideoGeneratorService:
                             # Resize to standard 1280x720 for video
                             img = img.resize((1280, 720), Image.Resampling.LANCZOS)
                             img.save(output_path, quality=95)
-                            print(f"    ✓ Saved (Infip AI): {output_path}")
+                            print(f"    ✓ Saved (Infip AI): {output_path}", flush=True)
                             return True
                         else:
-                            print(f"    ⚠ Download failed: {img_response.status_code}, retrying ({attempt+1}/3)")
+                            print(f"    ⚠ Download failed: {img_response.status_code}, retrying ({attempt+1}/3)", flush=True)
                     except (IOError, OSError) as e: # Catch truncation errors
-                        print(f"    ⚠ Image corrupted/truncated: {e}, retrying ({attempt+1}/3)")
+                        print(f"    ⚠ Image corrupted/truncated: {e}, retrying ({attempt+1}/3)", flush=True)
                         time.sleep(2)
                     except Exception as e:
-                         print(f"    ⚠ Download error: {e}, retrying ({attempt+1}/3)")
+                         print(f"    ⚠ Download error: {e}, retrying ({attempt+1}/3)", flush=True)
                          time.sleep(2)
                 
-                print(f"    ❌ Failed to download valid image after 3 attempts")
+                print(f"    ❌ Failed to download valid image after 3 attempts", flush=True)
                 return False
         except Exception as e:
-            print(f"    ⚠ Infip AI Exception: {e}")
+            print(f"    ⚠ Infip AI Exception: {e}", flush=True)
             
         return False
 
@@ -415,7 +415,7 @@ class VideoGeneratorService:
             img.save(image_path, quality=95)
             
         except Exception as e:
-            print(f"    ⚠️ Overlay failed: {e}")
+            print(f"    ⚠️ Overlay failed: {e}", flush=True)
 
     def _create_placeholder_image(self, title: str, output_path: str):
         """Create a styled placeholder image if generation fails (from photosynthesis_video_generator.py)."""
@@ -424,9 +424,9 @@ class VideoGeneratorService:
             draw = ImageDraw.Draw(img)
             draw.text((640, 360), title, fill='white', anchor='mm')
             img.save(output_path)
-            print(f"    ⚠ Created placeholder: {output_path}")
+            print(f"    ⚠ Created placeholder: {output_path}", flush=True)
         except Exception as e:
-            print(f"    ❌ Placeholder failed: {e}")
+            print(f"    ❌ Placeholder failed: {e}", flush=True)
 
     async def _generate_audio(self, text: str, output_path: str) -> float:
         """Generate audio using EdgeTTS and return duration."""
@@ -441,7 +441,7 @@ class VideoGeneratorService:
             audio = MP3(output_path)
             return audio.info.length
         except Exception as e:
-            print(f"    ⚠️ Audio failed: {e}")
+            print(f"    ⚠️ Audio failed: {e}", flush=True)
             return 3.0 # Default duration
 
     def combine_video(self, scenes_data: List[Dict], audio_path: str, output_path: str):
@@ -531,7 +531,7 @@ class VideoGeneratorService:
             processed_scenes = []
             
             for i, scene in enumerate(scenes):
-                print(f"  Processing Scene {i+1}/{len(scenes)}...")
+                print(f"  Processing Scene {i+1}/{len(scenes)}...", flush=True)
                 
                 # Image Generation Loop (Smart Fallback)
                 img_path = os.path.join(temp_dir, f"scene_{i}.png")
@@ -578,7 +578,7 @@ class VideoGeneratorService:
                 f.write(combined_audio)
                 
             # 4. Render Video
-            print("  🎥 Rendering final video...")
+            print("  🎥 Rendering final video...", flush=True)
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
             # 5. Upload to Cloudinary for CDN playback
@@ -591,7 +591,7 @@ class VideoGeneratorService:
                 api_key = os.getenv('CLOUDINARY_API_KEY')
                 api_secret = os.getenv('CLOUDINARY_API_SECRET')
                 
-                print(f"  ☁️ Cloudinary Config: cloud={cloud_name}, key={'set' if api_key else 'MISSING'}, secret={'set' if api_secret else 'MISSING'}", flush=True)
+                print(f"  ☁️ Cloudinary Config: cloud={cloud_name or 'MISSING'}, api_key={len(api_key) if api_key else 0} chars, api_secret={len(api_secret) if api_secret else 0} chars", flush=True)
                 
                 if not all([cloud_name, api_key, api_secret]):
                     raise ValueError("Missing Cloudinary credentials in environment")
@@ -612,7 +612,7 @@ class VideoGeneratorService:
                 public_url = upload_response.get('secure_url')
                 print(f"  ✅ Cloudinary upload complete: {public_url}", flush=True)
             except Exception as cloud_err:
-                print(f"  ⚠️ Cloudinary upload failed: {cloud_err}, using local fallback")
+                print(f"  ⚠️ Cloudinary upload failed: {cloud_err}, using local fallback", flush=True)
                 # Fallback to local URL if Cloudinary fails
                 render_url = os.getenv('RENDER_EXTERNAL_URL')
                 if render_url:
@@ -620,7 +620,7 @@ class VideoGeneratorService:
                 else:
                     public_url = f"http://localhost:5000/videos/{final_filename}"
             
-            print(f"  ✅ Video available at: {public_url}")
+            print(f"  ✅ Video available at: {public_url}", flush=True)
 
             # 6. Cleanup Temp (but KEEP the video file for local fallback)
             import shutil
@@ -635,19 +635,25 @@ class VideoGeneratorService:
                     'duration': sum(s['duration'] for s in processed_scenes),
                     'completedAt': datetime.now().isoformat()
                 })
-                print(f"✅ Video pipeline complete! URL: {public_url}")
-                print(f"   Generated {len(processed_scenes)} scenes, Total Duration: {sum(s['duration'] for s in processed_scenes):.2f}s")
+                print(f"✅ Video pipeline complete! URL: {public_url}", flush=True)
+                print(f"   Generated {len(processed_scenes)} scenes, Total Duration: {sum(s['duration'] for s in processed_scenes):.2f}s", flush=True)
             else:
-                 print("⚠️ Could not find firestore doc to update.")
+                 print("⚠️ Could not find firestore doc to update.", flush=True)
 
         except Exception as e:
-            print(f"❌ Video Generation Job Failed: {e}")
+            print(f"❌ Video Generation Job Failed: {e}", flush=True)
             import traceback
             traceback.print_exc()
             
-            # Attempt to update status to failed
-            if 'doc_ref' in locals() and doc_ref:
-                 doc_ref.update({'status': 'failed', 'error': str(e)})
+            # Attempt to update status to failed - wrap in try/except to avoid silent failures
+            try:
+                if 'doc_ref' in locals() and doc_ref:
+                    doc_ref.update({'status': 'failed', 'error': str(e)})
+                    print(f"  📝 Updated Firestore status to 'failed'", flush=True)
+                else:
+                    print(f"  ⚠️ No doc_ref available to update status", flush=True)
+            except Exception as update_err:
+                print(f"  ⚠️ Could not update Firestore: {update_err}", flush=True)
 
     def assemble_video_from_urls(self, scenes: List[Dict], image_urls: List[str], 
                                   user_id: str, session_id: str = None):
@@ -697,7 +703,7 @@ class VideoGeneratorService:
             combined_audio = b''
             
             for i, scene in enumerate(scenes):
-                print(f"  Processing Scene {i+1}/{len(scenes)}...")
+                print(f"  Processing Scene {i+1}/{len(scenes)}...", flush=True)
                 
                 # Download image from URL
                 img_path = os.path.join(temp_dir, f"scene_{i}.png")
@@ -708,11 +714,11 @@ class VideoGeneratorService:
                             img = Image.open(BytesIO(response.content))
                             img = img.resize((1280, 720), Image.Resampling.LANCZOS)
                             img.save(img_path, quality=95)
-                            print(f"    ✓ Downloaded image from Firebase")
+                            print(f"    ✓ Downloaded image from Firebase", flush=True)
                         else:
                             self._create_placeholder_image(img_path, scene.get('title', f'Scene {i+1}'))
                     except Exception as e:
-                        print(f"    ⚠ Failed to download: {e}, using placeholder")
+                        print(f"    ⚠ Failed to download: {e}, using placeholder", flush=True)
                         self._create_placeholder_image(img_path, scene.get('title', f'Scene {i+1}'))
                 else:
                     self._create_placeholder_image(img_path, scene.get('title', f'Scene {i+1}'))
@@ -737,7 +743,7 @@ class VideoGeneratorService:
                 f.write(combined_audio)
             
             # Render video
-            print("  🎥 Rendering final video...")
+            print("  🎥 Rendering final video...", flush=True)
             self.combine_video(processed_scenes, full_audio_path, final_video_path)
             
             # Cleanup
@@ -753,12 +759,12 @@ class VideoGeneratorService:
                     'duration': sum(s['duration'] for s in processed_scenes),
                     'completedAt': datetime.now().isoformat()
                 })
-                print(f"✅ Video assembly complete! URL: {public_url}")
+                print(f"✅ Video assembly complete! URL: {public_url}", flush=True)
             
             return {'success': True, 'videoUrl': public_url, 'videoId': video_id}
             
         except Exception as e:
-            print(f"❌ Video Assembly Failed: {e}")
+            print(f"❌ Video Assembly Failed: {e}", flush=True)
             import traceback
             traceback.print_exc()
             if 'doc_ref' in locals() and doc_ref:
